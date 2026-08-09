@@ -1,0 +1,24 @@
+// Hypothesis:
+//   Attackers frequently launch PowerShell with a Base64-encoded command
+//   (-EncodedCommand / -enc) to hide the payload from casual inspection and
+//   simple string-matching. Legitimate admin use of -enc exists but is rare;
+//   encoded PowerShell is a high-value, widely-recognised execution signal.
+//
+// Language: ES|QL (piped) — chosen to demonstrate range and aggregation-friendly
+//           syntax alongside the EQL sequence rules.
+//
+// Data source:
+//   - Sysmon Event ID 1 / process.start (Windows process creation)
+//
+// Notes:
+//   - The command line is lower-cased first so the match is case-insensitive
+//     (Lucene regex has no inline case flag).
+//   - The regex matches the flag family " -e ", " -enc ", " -encodedcommand ".
+
+FROM logs-windows.*, winlogbeat-*, logs-system.*
+| WHERE event.category == "process" AND event.type == "start"
+| EVAL proc_name = TO_LOWER(process.name), cmd = TO_LOWER(process.command_line)
+| WHERE proc_name IN ("powershell.exe", "pwsh.exe")
+| WHERE cmd RLIKE ".* -e(nc(odedcommand)?)? .*"
+| KEEP @timestamp, host.name, user.name, process.parent.name, process.name, process.command_line
+| SORT @timestamp DESC

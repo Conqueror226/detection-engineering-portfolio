@@ -1,7 +1,7 @@
 # Detection Engineering Portfolio
 
 A Detections-as-Code portfolio built on the Elastic Stack. Each detection is a
-self-contained, version-controlled, and CI-validated unit that pairs the query
+self-contained, version-controlled, and CI-tested unit that pairs the query
 logic with its hypothesis, MITRE ATT&CK mapping, and validation data.
 
 The focus is **identity-based lateral movement detection** (my research niche),
@@ -17,7 +17,7 @@ detection-engineering-portfolio/
 ├── detections/                 # one folder per detection (the "detection unit")
 │   └── <TECHNIQUE>_<name>/
 │       ├── rule.toml           # Elastic detection rule (Detections-as-Code)
-│       ├── query.eql/.esql     # the EQL or ES|QL detection logic
+│       ├── query.eql           # the detection logic
 │       ├── metadata.yml        # ATT&CK mapping, data sources, references
 │       ├── test_data/          # sample events: true & false positives
 │       └── README.md           # hypothesis, logic, tuning notes
@@ -37,7 +37,7 @@ Every detection answers four questions in order:
 | Detection | Technique | Tactic | Language | Category | Status |
 |---|---|---|---|---|---|
 | RDP Lateral Movement → Process Execution | [T1021.001](https://attack.mitre.org/techniques/T1021/001/) | Lateral Movement | EQL | signature | development |
-| Anomalous RC4 Kerberos TGT (Potential Overpass-the-Hash) | [T1550.002](https://attack.mitre.org/techniques/T1550/002/) | Lateral Movement | EQL | signature | development |
+| Anomalous RC4 Kerberos TGT (Overpass-the-Hash) | [T1550.002](https://attack.mitre.org/techniques/T1550/002/) | Lateral Movement | EQL | signature | development |
 | PowerShell Encoded Command Execution | [T1059.001](https://attack.mitre.org/techniques/T1059/001/) | Execution | ES\|QL | classic | development |
 
 _Signature = my research niche. Classic = recruiter-legible baseline detections._
@@ -80,7 +80,7 @@ python automation/validate_rules.py
 
 ## Design principles
 
-- **Detections-as-Code** — rules are text, versioned, reviewed, and structurally validated in CI.
+- **Detections-as-Code** — rules are text, versioned, reviewed, and tested like software.
 - **No real data** — all `test_data/` events are synthetic. No production logs, IPs, or hostnames.
 - **Traceable** — every detection maps to ATT&CK and cites its references.
 - **Falsifiable** — every detection ships with both a true-positive and a false-positive sample.
@@ -89,5 +89,5 @@ python automation/validate_rules.py
 
 ## Author
 
-Désiré Abdoul Kader BONZI — MSc Cybersecurity
+Désiré Abdoul Kader Bonzi — MSc Cybersecurity, Ritsumeikan University.
 Research: identity reachability and lateral movement detection.

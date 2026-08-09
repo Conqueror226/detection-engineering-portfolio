@@ -1,0 +1,21 @@
+// Hypothesis:
+//   Overpass-the-hash (a.k.a. pass-the-key) turns a stolen NTLM hash into a
+//   Kerberos TGT, letting an attacker "upgrade" to Kerberos and move laterally
+//   while blending into normal domain traffic. Tools that do this (e.g. Mimikatz
+//   sekurlsa::pth) request the TGT with RC4-HMAC encryption (0x17). In a modern
+//   AES-only domain, a user-account TGT issued with RC4 is anomalous and a
+//   high-signal indicator of overpass-the-hash.
+//
+// Data source:
+//   - Windows Security Event Log 4768 (Kerberos TGT / AS-REQ issued)
+//
+// Field notes:
+//   - TicketEncryptionType: 0x17 = RC4-HMAC (legacy), 0x12 = AES256, 0x11 = AES128.
+//   - Machine accounts (name ends with "$") are excluded: they legitimately fall
+//     back to RC4 in some configurations and would generate noise.
+
+authentication where
+  event.code == "4768" and
+  winlog.event_data.TicketEncryptionType == "0x17" and
+  not endsWith(winlog.event_data.TargetUserName, "$") and
+  not winlog.event_data.TargetUserName in ("krbtgt", "-")

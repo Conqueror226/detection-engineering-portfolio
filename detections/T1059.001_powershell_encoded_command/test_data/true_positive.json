@@ -1,0 +1,14 @@
+[
+  {
+    "@timestamp": "2026-08-10T13:20:41.000Z",
+    "event": { "category": "process", "type": "start" },
+    "host": { "name": "WS-ENG-12" },
+    "user": { "name": "d.kader" },
+    "process": {
+      "name": "powershell.exe",
+      "parent": { "name": "winword.exe" },
+      "command_line": "powershell.exe -nop -w hidden -enc SQBFAFgAKA...=="
+    },
+    "_comment": "PowerShell spawned by Word, hidden window, -enc Base64 payload -> fires."
+  }
+]

@@ -1,0 +1,26 @@
+[
+  {
+    "@timestamp": "2026-08-10T13:25:03.000Z",
+    "event": { "category": "process", "type": "start" },
+    "host": { "name": "WS-ENG-12" },
+    "user": { "name": "d.kader" },
+    "process": {
+      "name": "powershell.exe",
+      "parent": { "name": "explorer.exe" },
+      "command_line": "powershell.exe -ExecutionPolicy Bypass -File C:\\Scripts\\backup.ps1"
+    },
+    "_comment": "Normal script run, no encoded-command flag -> no match."
+  },
+  {
+    "@timestamp": "2026-08-10T13:26:10.000Z",
+    "event": { "category": "process", "type": "start" },
+    "host": { "name": "WS-ENG-12" },
+    "user": { "name": "d.kader" },
+    "process": {
+      "name": "cmd.exe",
+      "parent": { "name": "explorer.exe" },
+      "command_line": "cmd.exe /c echo -enc test"
+    },
+    "_comment": "Not PowerShell (cmd.exe) even though string contains -enc -> excluded by process filter."
+  }
+]

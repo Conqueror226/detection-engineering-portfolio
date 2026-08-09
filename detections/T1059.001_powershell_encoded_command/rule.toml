@@ -1,0 +1,64 @@
+[metadata]
+creation_date = "2026/08/10"
+updated_date = "2026/08/10"
+maturity = "development"
+
+[rule]
+author = ["Désiré Abdoul Kader Bonzi"]
+name = "PowerShell Encoded Command Execution"
+rule_id = "98288de2-34f1-482b-bb64-20bc7d93b76e"
+description = """
+Identifies PowerShell (powershell.exe or pwsh.exe) launched with a Base64
+-EncodedCommand argument. Encoding is commonly used to obscure malicious payloads
+from casual inspection and simple string matching. Legitimate encoded use exists
+but is uncommon and worth reviewing.
+"""
+type = "esql"
+language = "esql"
+license = "MIT"
+from = "now-9m"
+interval = "5m"
+risk_score = 47
+severity = "medium"
+tags = [
+  "Domain: Endpoint",
+  "OS: Windows",
+  "Use Case: Execution",
+  "Data Source: Sysmon",
+  "Tactic: Execution",
+]
+
+query = '''
+FROM logs-windows.*, winlogbeat-*, logs-system.*
+| WHERE event.category == "process" AND event.type == "start"
+| EVAL proc_name = TO_LOWER(process.name), cmd = TO_LOWER(process.command_line)
+| WHERE proc_name IN ("powershell.exe", "pwsh.exe")
+| WHERE cmd RLIKE ".* -e(nc(odedcommand)?)? .*"
+| KEEP @timestamp, host.name, user.name, process.parent.name, process.name, process.command_line
+| SORT @timestamp DESC
+'''
+
+[[rule.threat]]
+framework = "MITRE ATT&CK"
+
+  [rule.threat.tactic]
+  id = "TA0002"
+  name = "Execution"
+  reference = "https://attack.mitre.org/tactics/TA0002/"
+
+  [[rule.threat.technique]]
+  id = "T1059"
+  name = "Command and Scripting Interpreter"
+  reference = "https://attack.mitre.org/techniques/T1059/"
+
+    [[rule.threat.technique.subtechnique]]
+    id = "T1059.001"
+    name = "PowerShell"
+    reference = "https://attack.mitre.org/techniques/T1059/001/"
+
+[rule.false_positives]
+notes = [
+  "Administrative scripts or software deployment tools that legitimately encode commands.",
+  "Management frameworks (e.g. SCCM, some EDRs) that invoke encoded PowerShell.",
+  "Developers or power users testing encoded payloads in a lab.",
+]

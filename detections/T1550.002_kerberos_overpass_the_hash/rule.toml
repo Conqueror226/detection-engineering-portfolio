@@ -1,0 +1,65 @@
+[metadata]
+creation_date = "2026/08/10"
+updated_date = "2026/08/10"
+maturity = "development"
+
+[rule]
+author = ["Désiré Abdoul Kader Bonzi"]
+name = "Anomalous RC4 Kerberos TGT Request (Potential Overpass-the-Hash)"
+rule_id = "b1e7d2a4-4f3c-4c2a-9d1e-2a7c6f0b8e51"
+description = """
+Identifies a Kerberos TGT (AS-REQ, Event 4768) issued for a user account using
+RC4-HMAC encryption (0x17). In an AES-only domain this is anomalous and is a
+common indicator of overpass-the-hash, where a stolen NTLM hash is used to
+obtain a Kerberos ticket for lateral movement. Machine accounts and krbtgt are
+excluded to reduce noise.
+"""
+type = "eql"
+language = "eql"
+license = "MIT"
+index = ["winlogbeat-*", "logs-windows.*", "logs-system.*"]
+from = "now-9m"
+interval = "5m"
+risk_score = 61
+severity = "high"
+tags = [
+  "Domain: Endpoint",
+  "OS: Windows",
+  "Use Case: Lateral Movement",
+  "Use Case: Credential Access",
+  "Data Source: Windows Security Event Logs",
+  "Tactic: Lateral Movement",
+]
+
+query = '''
+authentication where
+  event.code == "4768" and
+  winlog.event_data.TicketEncryptionType == "0x17" and
+  not endsWith(winlog.event_data.TargetUserName, "$") and
+  not winlog.event_data.TargetUserName in ("krbtgt", "-")
+'''
+
+[[rule.threat]]
+framework = "MITRE ATT&CK"
+
+  [rule.threat.tactic]
+  id = "TA0008"
+  name = "Lateral Movement"
+  reference = "https://attack.mitre.org/tactics/TA0008/"
+
+  [[rule.threat.technique]]
+  id = "T1550"
+  name = "Use Alternate Authentication Material"
+  reference = "https://attack.mitre.org/techniques/T1550/"
+
+    [[rule.threat.technique.subtechnique]]
+    id = "T1550.002"
+    name = "Pass the Hash"
+    reference = "https://attack.mitre.org/techniques/T1550/002/"
+
+[rule.false_positives]
+notes = [
+  "Legacy systems or applications that still negotiate RC4 Kerberos encryption.",
+  "Domains mid-migration to AES where RC4 has not yet been disabled.",
+  "Service or interop accounts explicitly configured for RC4.",
+]

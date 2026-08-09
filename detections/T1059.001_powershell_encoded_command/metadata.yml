@@ -1,0 +1,40 @@
+id: T1059.001_powershell_encoded_command
+name: PowerShell Encoded Command Execution
+category: classic             # signature | classic
+status: development           # development | tested | production
+author: Désiré Abdoul Kader Bonzi
+created: 2026-08-10
+
+description: >
+  Detects PowerShell launched with a Base64 -EncodedCommand argument, a common
+  technique for obscuring malicious payloads. Written in ES|QL to demonstrate a
+  second query language alongside the EQL rules.
+
+query_language: esql
+query_file: query.esql
+rule_file: rule.toml
+
+platforms:
+  - windows
+
+data_sources:
+  - Sysmon / process creation (Event ID 1)
+
+attack:
+  - tactic: Execution
+    tactic_id: TA0002
+    technique: "Command and Scripting Interpreter: PowerShell"
+    technique_id: T1059.001
+
+false_positives:
+  - Administrative scripts or deployment tools that legitimately encode commands.
+  - Management frameworks (SCCM, some EDRs) that invoke encoded PowerShell.
+  - Developers testing encoded payloads in a lab.
+
+references:
+  - https://attack.mitre.org/techniques/T1059/001/
+  - https://www.elastic.co/docs/solutions/security/detect-and-alert/esql
+
+validation:
+  true_positive: test_data/true_positive.json
+  false_positive: test_data/false_positive.json

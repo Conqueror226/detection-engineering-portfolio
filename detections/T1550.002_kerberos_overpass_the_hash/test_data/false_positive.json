@@ -1,0 +1,30 @@
+[
+  {
+    "@timestamp": "2026-08-10T11:05:00.000Z",
+    "event": { "code": "4768", "category": "authentication", "outcome": "success" },
+    "winlog": {
+      "computer_name": "DC01",
+      "event_data": {
+        "TargetUserName": "a.morel",
+        "ServiceName": "krbtgt",
+        "TicketEncryptionType": "0x12",
+        "IpAddress": "10.20.4.51"
+      }
+    },
+    "_comment": "Normal AES256 (0x12) TGT -> encryption type does not match, no fire."
+  },
+  {
+    "@timestamp": "2026-08-10T11:06:30.000Z",
+    "event": { "code": "4768", "category": "authentication", "outcome": "success" },
+    "winlog": {
+      "computer_name": "DC01",
+      "event_data": {
+        "TargetUserName": "WS-FIN-07$",
+        "ServiceName": "krbtgt",
+        "TicketEncryptionType": "0x17",
+        "IpAddress": "10.20.4.60"
+      }
+    },
+    "_comment": "Machine account (ends with $) using RC4 -> excluded by design, no fire."
+  }
+]
