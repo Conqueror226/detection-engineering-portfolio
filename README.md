@@ -47,6 +47,19 @@ python automation/coverage_report.py
 python automation/generate_navigator_layer.py
 ```
 
+### CI artifacts
+
+GitHub Actions validates every detection on pushes and pull requests to
+`main`. Each successful run also publishes a downloadable
+`detection-coverage-<run-number>` artifact containing:
+
+- `coverage_report.txt` — human-readable coverage summary
+- `coverage_layer.json` — ATT&CK Navigator layer
+
+Download it from the workflow run's **Artifacts** section. To view the heatmap,
+open [ATT&CK Navigator](https://mitre-attack.github.io/attack-navigator/), choose
+**Open Existing Layer**, and upload `coverage_layer.json`.
+
 ---
 
 ## Local setup
@@ -74,5 +87,5 @@ python automation/validate_rules.py
 
 ## Author
 
-Désiré Abdoul Kader BONZI - MSc Cybersecurity, Ritsumeikan University.
-Research: identity reachability and lateral movement detection.
+Désiré Abdoul Kader BONZI — MSc Cybersecurity
+Research: identity reachability and lateral movement detection
