@@ -1,0 +1,66 @@
+[metadata]
+creation_date = "2026/08/10"
+updated_date = "2026/08/10"
+maturity = "development"
+
+[rule]
+author = ["Désiré Abdoul Kader Bonzi"]
+name = "RDP Lateral Movement Followed by Process Execution"
+rule_id = "86392e3c-90e5-44e5-a168-6dc37bcc0c81"
+description = """
+Identifies a successful RemoteInteractive (RDP, LogonType 10) logon immediately
+followed by process execution under the same account on the same host. This
+sequence is a common hands-on-keyboard lateral movement pattern and is higher
+fidelity than an isolated RDP logon alone.
+"""
+type = "eql"
+language = "eql"
+license = "MIT"
+index = ["winlogbeat-*", "logs-windows.*", "logs-system.*"]
+from = "now-9m"
+interval = "5m"
+risk_score = 47
+severity = "medium"
+tags = [
+  "Domain: Endpoint",
+  "OS: Windows",
+  "Use Case: Lateral Movement",
+  "Data Source: Windows Security Event Logs",
+  "Tactic: Lateral Movement",
+]
+
+query = '''
+sequence by winlog.computer_name with maxspan=1m
+  [ authentication where
+      event.code == "4624" and
+      winlog.event_data.LogonType == "10" and
+      event.outcome == "success" and
+      not winlog.event_data.IpAddress in ("-", "127.0.0.1", "::1", "0.0.0.0")
+  ] by winlog.event_data.TargetUserName
+  [ process where event.type == "start" ] by user.name
+'''
+
+[[rule.threat]]
+framework = "MITRE ATT&CK"
+
+  [rule.threat.tactic]
+  id = "TA0008"
+  name = "Lateral Movement"
+  reference = "https://attack.mitre.org/tactics/TA0008/"
+
+  [[rule.threat.technique]]
+  id = "T1021"
+  name = "Remote Services"
+  reference = "https://attack.mitre.org/techniques/T1021/"
+
+    [[rule.threat.technique.subtechnique]]
+    id = "T1021.001"
+    name = "Remote Desktop Protocol"
+    reference = "https://attack.mitre.org/techniques/T1021/001/"
+
+[rule.false_positives]
+notes = [
+  "Legitimate administrative RDP sessions where an admin logs in and runs tools.",
+  "Jump hosts / bastion servers where remote logon followed by activity is expected.",
+  "Automation or monitoring accounts that use RDP by design.",
+]

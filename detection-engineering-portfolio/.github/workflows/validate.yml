@@ -1,0 +1,44 @@
+name: Validate Detections
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+
+      - name: Validate all detection rules
+        run: python automation/validate_rules.py
+
+      - name: Generate coverage artifacts
+        run: |
+          mkdir -p artifacts
+          python automation/coverage_report.py | tee artifacts/coverage_report.txt
+          python automation/generate_navigator_layer.py
+          cp attack_navigator/coverage_layer.json artifacts/coverage_layer.json
+
+      - name: Upload coverage artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: detection-coverage-${{ github.run_number }}
+          path: artifacts/
+          if-no-files-found: error
+          retention-days: 30

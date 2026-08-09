@@ -1,0 +1,23 @@
+[
+  {
+    "@timestamp": "2026-08-10T09:15:02.000Z",
+    "event": { "code": "4624", "category": "authentication", "outcome": "success" },
+    "winlog": {
+      "computer_name": "WS-FIN-07",
+      "event_data": {
+        "LogonType": "10",
+        "TargetUserName": "j.tanaka",
+        "IpAddress": "10.20.4.51"
+      }
+    },
+    "_comment": "RemoteInteractive (RDP) logon from a remote host, non-local IP."
+  },
+  {
+    "@timestamp": "2026-08-10T09:15:20.000Z",
+    "event": { "type": "start", "category": "process" },
+    "winlog": { "computer_name": "WS-FIN-07" },
+    "user": { "name": "j.tanaka" },
+    "process": { "name": "powershell.exe", "command_line": "powershell -enc <redacted>" },
+    "_comment": "Process launched 18s later by the same identity on the same host -> sequence matches."
+  }
+]
