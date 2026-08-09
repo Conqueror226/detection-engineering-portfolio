@@ -89,5 +89,5 @@ python automation/validate_rules.py
 
 ## Author
 
-Désiré Abdoul Kader Bonzi — MSc Cybersecurity, Ritsumeikan University.
+Désiré Abdoul Kader BONZI  — MSc Cybersecurity
 Research: identity reachability and lateral movement detection.
