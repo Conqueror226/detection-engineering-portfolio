@@ -1,0 +1,33 @@
+{
+  "name": "Detection Portfolio Coverage",
+  "versions": {
+    "attack": "15",
+    "navigator": "5.0.0",
+    "layer": "4.5"
+  },
+  "domain": "enterprise-attack",
+  "description": "Techniques covered by this detection engineering portfolio.",
+  "techniques": [
+    {
+      "techniqueID": "T1021.001",
+      "score": 1,
+      "color": "#2E7D32",
+      "comment": "RDP Lateral Movement Followed by Process Execution",
+      "enabled": true
+    }
+  ],
+  "gradient": {
+    "colors": [
+      "#FFF3E0",
+      "#2E7D32"
+    ],
+    "minValue": 0,
+    "maxValue": 1
+  },
+  "legendItems": [
+    {
+      "label": "Covered",
+      "color": "#2E7D32"
+    }
+  ]
+}

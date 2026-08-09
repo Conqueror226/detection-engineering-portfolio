@@ -1,0 +1,23 @@
+[
+  {
+    "@timestamp": "2026-08-10T09:40:00.000Z",
+    "event": { "code": "4624", "category": "authentication", "outcome": "success" },
+    "winlog": {
+      "computer_name": "WS-FIN-07",
+      "event_data": {
+        "LogonType": "2",
+        "TargetUserName": "j.tanaka",
+        "IpAddress": "127.0.0.1"
+      }
+    },
+    "_comment": "LogonType 2 (Interactive/local), loopback IP -> not RDP, first sequence stage does not match."
+  },
+  {
+    "@timestamp": "2026-08-10T09:40:35.000Z",
+    "event": { "type": "start", "category": "process" },
+    "winlog": { "computer_name": "WS-FIN-07" },
+    "user": { "name": "svc-backup" },
+    "process": { "name": "explorer.exe" },
+    "_comment": "Process run by a different identity (svc-backup) -> join key mismatch, no sequence."
+  }
+]
