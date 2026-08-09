@@ -29,12 +29,12 @@ tags = [
 ]
 
 query = '''
-FROM logs-windows.*, winlogbeat-*, logs-system.*
+FROM logs-windows.*, winlogbeat-*, logs-system.* METADATA _id, _version, _index
 | WHERE event.category == "process" AND event.type == "start"
 | EVAL proc_name = TO_LOWER(process.name), cmd = TO_LOWER(process.command_line)
 | WHERE proc_name IN ("powershell.exe", "pwsh.exe")
-| WHERE cmd RLIKE ".* -e(nc(odedcommand)?)? .*"
-| KEEP @timestamp, host.name, user.name, process.parent.name, process.name, process.command_line
+| WHERE cmd RLIKE ".* -e(n(c(o(d(e(d(c(o(m(m(a(n(d)?)?)?)?)?)?)?)?)?)?)?)?)? +[a-z0-9+/=]{20,}.*"
+| KEEP _id, @timestamp, host.name, user.name, process.parent.name, process.name, process.command_line
 | SORT @timestamp DESC
 '''
 

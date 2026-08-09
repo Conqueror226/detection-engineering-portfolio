@@ -28,6 +28,9 @@ jobs:
       - name: Validate all detection rules
         run: python automation/validate_rules.py
 
+      - name: Run detection logic tests (EQL)
+        run: python automation/test_detections.py
+
       - name: Generate coverage artifacts
         run: |
           mkdir -p artifacts

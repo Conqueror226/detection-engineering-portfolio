@@ -6,9 +6,10 @@ author: Désiré Abdoul Kader Bonzi
 created: 2026-08-10
 
 description: >
-  Detects a Kerberos TGT (Event 4768) issued for a user account with RC4-HMAC
-  encryption in an AES-only domain, a common indicator of overpass-the-hash used
-  to pivot from a stolen NTLM hash to Kerberos-based lateral movement.
+  Surfaces a Kerberos TGT (Event 4768) issued for a user account with RC4-HMAC
+  encryption in an AES-standardised domain. An environment-dependent hunt signal
+  that can accompany overpass-the-hash but is neither necessary nor sufficient for
+  it; baseline before use and treat as a correlation lead, not proof.
 
 query_language: eql
 query_file: query.eql

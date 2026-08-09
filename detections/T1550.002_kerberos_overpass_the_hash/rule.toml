@@ -8,11 +8,13 @@ author = ["Désiré Abdoul Kader Bonzi"]
 name = "Anomalous RC4 Kerberos TGT Request (Potential Overpass-the-Hash)"
 rule_id = "b1e7d2a4-4f3c-4c2a-9d1e-2a7c6f0b8e51"
 description = """
-Identifies a Kerberos TGT (AS-REQ, Event 4768) issued for a user account using
-RC4-HMAC encryption (0x17). In an AES-only domain this is anomalous and is a
-common indicator of overpass-the-hash, where a stolen NTLM hash is used to
-obtain a Kerberos ticket for lateral movement. Machine accounts and krbtgt are
-excluded to reduce noise.
+Surfaces a Kerberos TGT (AS-REQ, Event 4768) issued for a user account using
+RC4-HMAC encryption (0x17). In a domain standardised on AES this is anomalous and
+can accompany overpass-the-hash, but RC4 is an environment-dependent indicator,
+not a fingerprint: it is neither required for overpass-the-hash (AES keys can be
+passed) nor exclusive to it (legacy accounts, trusts, and incomplete AES
+migrations also produce RC4). Intended as a hunt/correlation signal to be
+baselined before use. Machine accounts and krbtgt are excluded to reduce noise.
 """
 type = "eql"
 language = "eql"
@@ -20,8 +22,8 @@ license = "MIT"
 index = ["winlogbeat-*", "logs-windows.*", "logs-system.*"]
 from = "now-9m"
 interval = "5m"
-risk_score = 61
-severity = "high"
+risk_score = 47
+severity = "medium"
 tags = [
   "Domain: Endpoint",
   "OS: Windows",

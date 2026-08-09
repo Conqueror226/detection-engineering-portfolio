@@ -9,28 +9,33 @@
 ## Hypothesis
 
 Base64-encoding a PowerShell command (`-EncodedCommand` / `-enc`) is a routine
-way for attackers to hide a payload from casual inspection and simple string
-matching. Legitimate encoded use exists, but it is uncommon enough that every
-instance is worth a look. This is a widely-recognised "classic" detection that
-recruiters expect to see — it demonstrates breadth beyond the identity niche.
+way to hide a payload from casual inspection and simple string matching.
+Legitimate encoded use exists, so this is a review-worthy signal rather than a
+high-confidence one — worth catching precisely, with the noise controlled.
 
 Analogy: it's not the letter that's suspicious, it's that someone bothered to
-write it in cipher. Encoding isn't proof of malice, but it's a reason to open the
-envelope.
+write it in cipher *and* the message is long. Encoding isn't proof of malice, but
+an encoded blob is a reason to open the envelope.
 
 ## Logic
 
 An ES|QL pipeline:
 
-1. `FROM` process indices, filter to process-start events.
-2. Lower-case `process.name` and `process.command_line` for case-insensitive matching.
-3. Keep only `powershell.exe` / `pwsh.exe`.
-4. `RLIKE` matches the encoded-command flag family: `-e`, `-enc`, `-encodedcommand`.
-5. `KEEP` the useful fields and `SORT` newest first for triage.
+1. `FROM … METADATA _id, _version, _index` — carry the source `_id` so the
+   detection engine can deduplicate alerts (required for non-aggregating ES|QL
+   rules; dropping `_id` in `KEEP` breaks dedup).
+2. Filter to process-start events.
+3. Lower-case `process.name` and `process.command_line` for case-insensitive matching.
+4. Keep only `powershell.exe` / `pwsh.exe`.
+5. `RLIKE` matches the **full** encoded-command prefix family — `-e`, `-en`,
+   `-enc`, `-enco`, … through `-encodedcommand` — using a nested-optional pattern,
+   and requires a following Base64-looking token of 20+ chars. The payload
+   requirement is what removes the noisy bare-`-e` false positives.
+6. `KEEP` the useful fields (including `_id`) and `SORT` newest first for triage.
 
 This is the portfolio's first **ES|QL** rule. EQL handles the sequence-based
-identity detections; ES|QL's piped, aggregation-friendly syntax fits single-event
-and analytics-style detections and shows a second Elastic query language.
+identity detections; ES|QL's piped syntax fits single-event and analytics-style
+detections and shows a second Elastic query language.
 
 ## Data source
 
@@ -40,13 +45,16 @@ and analytics-style detections and shows a second Elastic query language.
 
 | File | Expectation |
 |---|---|
-| `test_data/true_positive.json` | `powershell.exe -enc <base64>` → rule should fire |
+| `test_data/true_positive.json` | `powershell.exe … -encod <long base64>` → rule should fire |
 | `test_data/false_positive.json` | Normal PowerShell + a non-PowerShell process → rule should not fire |
+
+The true-positive deliberately uses a mid-prefix flag (`-encod`) to exercise the
+full prefix coverage, not just `-enc`.
 
 ## Tuning notes
 
 - Baseline legitimate encoders (deployment tooling, EDR agents) and allowlist them.
-- Consider enriching with the **decoded** command in a follow-up analytic; the
-  decoded content is where true intent shows.
-- Watch for obfuscation that splits or cases the flag unusually; the lower-casing
-  step handles case, but heavy obfuscation may need a dedicated rule.
+- Enrich with the **decoded** command in a follow-up analytic; the decoded content
+  is where true intent shows.
+- The 20-char Base64 floor is a heuristic — real payloads are far longer. Lower it
+  only if you see short-but-malicious encodings in your environment.
