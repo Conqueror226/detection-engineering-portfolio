@@ -2,15 +2,8 @@
   {
     "@timestamp": "2026-08-10T09:40:00.000Z",
     "event": { "code": "4624", "category": "authentication", "outcome": "success" },
-    "winlog": {
-      "computer_name": "WS-FIN-07",
-      "event_data": {
-        "LogonType": "2",
-        "TargetUserName": "j.tanaka",
-        "IpAddress": "127.0.0.1"
-      }
-    },
-    "_comment": "LogonType 2 (Interactive/local), loopback IP -> not RDP, first sequence stage does not match."
+    "winlog": { "computer_name": "WS-FIN-07", "event_data": { "LogonType": "2", "TargetUserName": "j.tanaka", "IpAddress": "127.0.0.1" } },
+    "_comment": "LogonType 2 (local), loopback IP -> not RDP, first stage does not match."
   },
   {
     "@timestamp": "2026-08-10T09:40:35.000Z",
@@ -18,6 +11,20 @@
     "winlog": { "computer_name": "WS-FIN-07" },
     "user": { "name": "svc-backup" },
     "process": { "name": "explorer.exe" },
-    "_comment": "Process run by a different identity (svc-backup) -> join key mismatch, no sequence."
+    "_comment": "Process by a different identity -> join key mismatch, no sequence."
+  },
+  {
+    "@timestamp": "2026-08-10T10:00:00.000Z",
+    "event": { "code": "4624", "category": "authentication", "outcome": "success" },
+    "winlog": { "computer_name": "WS-OPS-03", "event_data": { "LogonType": "10", "TargetUserName": "t.remote", "IpAddress": "10.20.5.11" } },
+    "_comment": "TIMING CASE: valid RDP logon (type 10, success, remote IP) for t.remote."
+  },
+  {
+    "@timestamp": "2026-08-10T10:02:00.000Z",
+    "event": { "type": "start", "category": "process" },
+    "winlog": { "computer_name": "WS-OPS-03" },
+    "user": { "name": "t.remote" },
+    "process": { "name": "cmd.exe" },
+    "_comment": "TIMING CASE: process by t.remote 120s after logon -> exceeds maxspan=1m, must NOT fire. This is the committed test that proves maxspan is enforced."
   }
 ]

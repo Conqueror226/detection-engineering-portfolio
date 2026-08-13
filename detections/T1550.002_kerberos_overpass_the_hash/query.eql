@@ -10,13 +10,18 @@
 //   - Windows Security Event Log 4768 (Kerberos TGT / AS-REQ issued)
 //
 // Field notes:
+//   - Event 4768 is logged for BOTH successful and failed requests, so the rule
+//     constrains to event.outcome == "success" (a ticket was actually issued).
 //   - TicketEncryptionType: 0x17 = RC4-HMAC (legacy), 0x12 = AES256, 0x11 = AES128.
-//   - Machine accounts ("$") and krbtgt are excluded to reduce known-benign RC4.
-//   - This rule is only meaningful AFTER confirming the domain is AES-standardised;
-//     otherwise it is high-noise. Baseline before enabling.
+//   - Machine accounts ("$"), krbtgt, and null/empty usernames are excluded to
+//     drop known-benign or malformed RC4.
+//   - Only meaningful AFTER confirming the domain is AES-standardised; otherwise
+//     high-noise. Baseline before enabling.
 
 authentication where
   event.code == "4768" and
+  event.outcome == "success" and
   winlog.event_data.TicketEncryptionType == "0x17" and
+  winlog.event_data.TargetUserName != null and
   not endsWith(winlog.event_data.TargetUserName, "$") and
-  not winlog.event_data.TargetUserName in ("krbtgt", "-")
+  not winlog.event_data.TargetUserName in ("krbtgt", "-", "")

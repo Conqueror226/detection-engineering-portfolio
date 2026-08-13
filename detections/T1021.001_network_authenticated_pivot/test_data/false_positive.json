@@ -1,0 +1,22 @@
+[
+  { "@timestamp": "2026-08-10T11:00:00Z", "event": { "category": ["network"], "type": ["connection"] },
+    "source": { "ip": "10.20.4.51", "port": 51001 }, "destination": { "ip": "10.20.4.60", "port": 443 },
+    "network": { "transport": "tcp", "protocol": "https", "packets": 5, "bytes": 700 },
+    "_comment": "Benign HTTPS connection (not RDP/SMB) -> network stage does not match." },
+  { "@timestamp": "2026-08-10T11:00:05Z", "event": { "category": "authentication", "code": "4624", "outcome": "success" },
+    "host": { "ip": "10.20.4.60" }, "winlog": { "event_data": { "LogonType": "10", "TargetUserName": "j.tanaka" } },
+    "_comment": "Auth present, but no qualifying connection preceded it." },
+  { "@timestamp": "2026-08-10T11:00:20Z", "event": { "category": "process", "type": "start" },
+    "host": { "ip": "10.20.4.60" }, "user": { "name": "j.tanaka" }, "process": { "name": "cmd.exe" },
+    "_comment": "Process present, but chain never formed -> no fire." },
+  { "@timestamp": "2026-08-10T12:00:00Z", "event": { "category": ["network"], "type": ["connection"] },
+    "source": { "ip": "10.20.4.51", "port": 49713 }, "destination": { "ip": "10.20.4.60", "port": 3389 },
+    "network": { "transport": "tcp", "protocol": "rdp" },
+    "_comment": "Valid RDP flow ..." },
+  { "@timestamp": "2026-08-10T12:00:05Z", "event": { "category": "authentication", "code": "4624", "outcome": "success" },
+    "host": { "ip": "10.20.4.60" }, "winlog": { "event_data": { "LogonType": "10", "TargetUserName": "j.tanaka" } },
+    "_comment": "... and valid auth on the target ..." },
+  { "@timestamp": "2026-08-10T12:00:20Z", "event": { "category": "process", "type": "start" },
+    "host": { "ip": "10.20.9.99" }, "user": { "name": "j.tanaka" }, "process": { "name": "powershell.exe" },
+    "_comment": "... but the process runs on a DIFFERENT host (10.20.9.99) -> join breaks, no fire." }
+]

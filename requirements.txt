@@ -2,3 +2,4 @@
 PyYAML>=6.0
 toml>=0.10.2
 eql>=1.0.1
+scapy>=2.5.0

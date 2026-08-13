@@ -2,9 +2,9 @@
 //   Attackers frequently launch PowerShell with a Base64-encoded command to hide
 //   the payload from casual inspection and simple string matching. PowerShell
 //   accepts ANY unambiguous prefix of -EncodedCommand (-e, -en, -enc, ...,
-//   -encodedcommand), so the match must cover the whole prefix family, not just a
-//   few spellings. To cut noise, the flag must be followed by a long Base64-looking
-//   token — a bare "-e" with no payload does not fire.
+//   -encodedcommand) AND the documented alias -ec, so the match covers the whole
+//   prefix family plus -ec. To cut noise, the flag must be followed by a long
+//   Base64-looking token — a bare "-e" with no payload does not fire.
 //
 // Language: ES|QL (piped).
 //
@@ -15,14 +15,13 @@
 //   - METADATA _id, _version, _index is carried through so the detection engine
 //     can deduplicate alerts on the source document _id (required for
 //     non-aggregating ES|QL rules).
-//   - The command line is lower-cased first for case-insensitive matching
-//     (Lucene regex has no inline case flag).
-//   - The nested-optional regex matches exactly the prefixes of "encodedcommand".
+//   - The command line is lower-cased first for case-insensitive matching.
+//   - Regex: nested-optional prefixes of "encodedcommand", OR the -ec alias.
 
 FROM logs-windows.*, winlogbeat-*, logs-system.* METADATA _id, _version, _index
 | WHERE event.category == "process" AND event.type == "start"
 | EVAL proc_name = TO_LOWER(process.name), cmd = TO_LOWER(process.command_line)
 | WHERE proc_name IN ("powershell.exe", "pwsh.exe")
-| WHERE cmd RLIKE ".* -e(n(c(o(d(e(d(c(o(m(m(a(n(d)?)?)?)?)?)?)?)?)?)?)?)?)? +[a-z0-9+/=]{20,}.*"
+| WHERE cmd RLIKE ".* -(e(n(c(o(d(e(d(c(o(m(m(a(n(d)?)?)?)?)?)?)?)?)?)?)?)?)?|ec) +[a-z0-9+/=]{20,}.*"
 | KEEP _id, @timestamp, host.name, user.name, process.parent.name, process.name, process.command_line
 | SORT @timestamp DESC

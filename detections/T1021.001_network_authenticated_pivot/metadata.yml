@@ -1,0 +1,43 @@
+id: T1021.001_network_authenticated_pivot
+name: "Authenticated Pivot: Network Connection to Auth to Process Execution"
+category: signature
+status: development
+author: Désiré Abdoul Kader Bonzi
+created: 2026-08-10
+
+description: >
+  Correlates an east-west RDP/SMB connection, a successful Windows logon, and
+  post-authentication process execution on the same target within five minutes.
+  Network telemetry from the Scapy ECS sensor corroborates host/identity evidence.
+
+query_language: eql
+query_file: query.eql
+rule_file: rule.toml
+
+platforms:
+  - windows
+  - network
+
+data_sources:
+  - Scapy ECS network sensor (event.category "network")
+  - Windows Security Event Log (Event ID 4624)
+  - Sysmon / process creation (Event ID 1)
+
+attack:
+  - tactic: Lateral Movement
+    tactic_id: TA0008
+    technique: "Remote Services: Remote Desktop Protocol"
+    technique_id: T1021.001
+
+false_positives:
+  - Administrators using RDP/SMB then running tools on the target.
+  - Jump hosts and bastions where connect-then-execute is expected.
+  - Backup/monitoring/automation identities that connect and run processes by design.
+
+references:
+  - https://attack.mitre.org/techniques/T1021/001/
+  - https://www.elastic.co/guide/en/ecs/current/ecs-network.html
+
+validation:
+  true_positive: test_data/true_positive.json
+  false_positive: test_data/false_positive.json

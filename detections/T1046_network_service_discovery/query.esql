@@ -1,0 +1,23 @@
+// Hypothesis:
+//   Network service discovery (a port scan) shows up in flow telemetry as one
+//   source touching many distinct destination ports on a single host in a short
+//   window. Aggregating the Scapy sensor's ECS flows by (source.ip,
+//   destination.ip) and counting distinct destination ports surfaces the fan-out
+//   that a single legitimate connection never produces.
+//
+// Language: ES|QL (aggregation) — STATS/COUNT_DISTINCT is the natural fit; EQL
+//           cannot express a distinct-count threshold. Not executed by the
+//           offline harness (ES|QL has no offline engine); structure-validated.
+//
+// Data source:
+//   - Scapy ECS network sensor (event.category "network")
+//
+// Threshold:
+//   >= 15 distinct destination ports from one source to one host. Tune to the
+//   environment; vulnerability scanners and asset-management tools will trip it.
+
+FROM logs-network.* METADATA _id, _version, _index
+| WHERE event.category == "network" AND network.transport == "tcp"
+| STATS distinct_ports = COUNT_DISTINCT(destination.port) BY source.ip, destination.ip
+| WHERE distinct_ports >= 15
+| SORT distinct_ports DESC

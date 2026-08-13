@@ -1,0 +1,101 @@
+[
+  {
+    "@timestamp": "2025-08-10T10:00:00Z",
+    "event": {
+      "category": [
+        "network"
+      ],
+      "type": [
+        "connection"
+      ],
+      "action": "network_flow",
+      "duration": 49999952
+    },
+    "source": {
+      "ip": "10.20.4.60",
+      "port": 51001
+    },
+    "destination": {
+      "ip": "142.250.190.46",
+      "port": 443
+    },
+    "network": {
+      "transport": "tcp",
+      "protocol": "https",
+      "packets": 4,
+      "bytes": 816
+    },
+    "host": {
+      "name": "WS-FIN-07"
+    },
+    "observer": {
+      "type": "scapy-ecs-sensor"
+    }
+  },
+  {
+    "@timestamp": "2025-08-10T10:00:00.010000Z",
+    "event": {
+      "category": [
+        "network"
+      ],
+      "type": [
+        "connection"
+      ],
+      "action": "network_flow",
+      "duration": 0
+    },
+    "source": {
+      "ip": "142.250.190.46",
+      "port": 443
+    },
+    "destination": {
+      "ip": "10.20.4.60",
+      "port": 51001
+    },
+    "network": {
+      "transport": "tcp",
+      "protocol": null,
+      "packets": 1,
+      "bytes": 54
+    },
+    "host": {
+      "name": "WS-FIN-07"
+    },
+    "observer": {
+      "type": "scapy-ecs-sensor"
+    }
+  },
+  {
+    "@timestamp": "2025-08-10T10:00:00.100000Z",
+    "event": {
+      "category": [
+        "network"
+      ],
+      "type": [
+        "connection"
+      ],
+      "action": "network_flow",
+      "duration": 0
+    },
+    "source": {
+      "ip": "10.20.4.60",
+      "port": 55000
+    },
+    "destination": {
+      "ip": "192.168.1.1",
+      "port": 53
+    },
+    "network": {
+      "transport": "udp",
+      "protocol": "dns",
+      "packets": 1,
+      "bytes": 82
+    },
+    "host": {
+      "name": "WS-FIN-07"
+    },
+    "observer": {
+      "type": "scapy-ecs-sensor"
+    }
+  }
+]

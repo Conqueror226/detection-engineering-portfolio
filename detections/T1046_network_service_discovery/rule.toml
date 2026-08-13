@@ -1,0 +1,56 @@
+[metadata]
+creation_date = "2026/08/10"
+updated_date = "2026/08/10"
+maturity = "development"
+
+[rule]
+author = ["Désiré Abdoul Kader Bonzi"]
+name = "Network Service Discovery via Port Fan-Out"
+rule_id = "5255b331-b032-4bad-9219-42d7ab9234a7"
+description = """
+Flags a single source contacting many distinct destination ports on one host in
+the aggregation window, the flow-level signature of a vertical port scan. Built
+on the Scapy ECS sensor's network events. Threshold-based; tune to the
+environment as scanners and asset-management tooling will also trip it.
+"""
+type = "esql"
+language = "esql"
+license = "MIT"
+from = "now-10m"
+interval = "5m"
+risk_score = 42
+severity = "low"
+tags = [
+  "Domain: Network",
+  "Use Case: Discovery",
+  "Data Source: Scapy ECS Sensor",
+  "Tactic: Discovery",
+]
+
+query = '''
+FROM logs-network.* METADATA _id, _version, _index
+| WHERE event.category == "network" AND network.transport == "tcp"
+| STATS distinct_ports = COUNT_DISTINCT(destination.port) BY source.ip, destination.ip
+| WHERE distinct_ports >= 15
+| SORT distinct_ports DESC
+'''
+
+[[rule.threat]]
+framework = "MITRE ATT&CK"
+
+  [rule.threat.tactic]
+  id = "TA0007"
+  name = "Discovery"
+  reference = "https://attack.mitre.org/tactics/TA0007/"
+
+  [[rule.threat.technique]]
+  id = "T1046"
+  name = "Network Service Discovery"
+  reference = "https://attack.mitre.org/techniques/T1046/"
+
+[rule.false_positives]
+notes = [
+  "Authorised vulnerability scanners (e.g. Nessus, OpenVAS).",
+  "Asset-management and monitoring tools that probe many ports.",
+  "Load balancers or health-checkers touching many service ports.",
+]

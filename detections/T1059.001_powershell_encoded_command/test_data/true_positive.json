@@ -4,11 +4,17 @@
     "event": { "category": "process", "type": "start" },
     "host": { "name": "WS-ENG-12" },
     "user": { "name": "d.kader" },
-    "process": {
-      "name": "powershell.exe",
-      "parent": { "name": "winword.exe" },
-      "command_line": "powershell.exe -nop -w hidden -encod SQBFAFgAKABOAGUAdwAtAE8AYgBqAGUAYwB0ACAATgBlAHQALgBXAGUAYgBDAGwAaQBlAG4AdAApAA=="
-    },
-    "_comment": "PowerShell spawned by Word, hidden window, -encod (mid-prefix) + long Base64 -> fires."
+    "process": { "name": "powershell.exe", "parent": { "name": "winword.exe" },
+      "command_line": "powershell.exe -nop -w hidden -encod SQBFAFgAKABOAGUAdwAtAE8AYgBqAGUAYwB0ACAATgBlAHQALgBXAGUAYgBDAGwAaQBlAG4AdAApAA==" },
+    "_comment": "-encod (mid-prefix) + long Base64 -> fires; exercises prefix-family coverage."
+  },
+  {
+    "@timestamp": "2026-08-10T13:22:10.000Z",
+    "event": { "category": "process", "type": "start" },
+    "host": { "name": "WS-ENG-12" },
+    "user": { "name": "d.kader" },
+    "process": { "name": "powershell.exe", "parent": { "name": "cmd.exe" },
+      "command_line": "powershell -ec SQBFAFgAKABOAGUAdwAtAE8AYgBqAGUAYwB0ACAATgBlAHQALgBXAGUAYgBDAGwAaQBlAG4AdAApAA==" },
+    "_comment": "-ec alias + long Base64 -> fires; exercises the documented -ec alias."
   }
 ]

@@ -36,9 +36,11 @@ tags = [
 query = '''
 authentication where
   event.code == "4768" and
+  event.outcome == "success" and
   winlog.event_data.TicketEncryptionType == "0x17" and
+  winlog.event_data.TargetUserName != null and
   not endsWith(winlog.event_data.TargetUserName, "$") and
-  not winlog.event_data.TargetUserName in ("krbtgt", "-")
+  not winlog.event_data.TargetUserName in ("krbtgt", "-", "")
 '''
 
 [[rule.threat]]

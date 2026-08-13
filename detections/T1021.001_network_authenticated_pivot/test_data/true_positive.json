@@ -1,0 +1,13 @@
+[
+  { "@timestamp": "2026-08-10T10:00:00Z", "event": { "category": ["network"], "type": ["connection"], "action": "network_flow" },
+    "source": { "ip": "10.20.4.51", "port": 49712 }, "destination": { "ip": "10.20.4.60", "port": 3389 },
+    "network": { "transport": "tcp", "protocol": "rdp", "packets": 6, "bytes": 804 }, "observer": { "type": "scapy-ecs-sensor" },
+    "_comment": "Sensor-emitted RDP flow to the target (edge exists)." },
+  { "@timestamp": "2026-08-10T10:00:05Z", "event": { "category": "authentication", "code": "4624", "outcome": "success" },
+    "host": { "ip": "10.20.4.60", "name": "WS-FIN-07" }, "winlog": { "event_data": { "LogonType": "10", "TargetUserName": "j.tanaka" } },
+    "_comment": "Successful RemoteInteractive logon on the target (edge traversed, by whom)." },
+  { "@timestamp": "2026-08-10T10:00:20Z", "event": { "category": "process", "type": "start" },
+    "host": { "ip": "10.20.4.60", "name": "WS-FIN-07" }, "user": { "name": "j.tanaka" },
+    "process": { "name": "powershell.exe" },
+    "_comment": "Post-auth execution by the same identity -> full chain fires." }
+]

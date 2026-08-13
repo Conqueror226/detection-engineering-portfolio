@@ -7,8 +7,11 @@ each unit's structure and, for EQL rules, executes the query against its samples
 (see the CI section for exactly what is and isn't covered).
 
 The focus is **identity-based lateral movement detection** (my research niche),
-complemented by a set of widely-recognised "classic" detections to demonstrate
-range.
+complemented by widely-recognised "classic" detections for range. A Scapy-based
+**ECS network sensor** adds a network-evidence layer, enabling a full-chain
+signature: **network connection → authenticated pivot → process execution**.
+Network telemetry corroborates host and identity evidence; it is never treated as
+standalone proof.
 
 ---
 
@@ -19,11 +22,12 @@ detection-engineering-portfolio/
 ├── detections/                 # one folder per detection (the "detection unit")
 │   └── <TECHNIQUE>_<name>/
 │       ├── rule.toml           # Elastic detection rule (Detections-as-Code)
-│       ├── query.eql           # the detection logic
+│       ├── query.eql|.esql     # the detection logic (EQL or ES|QL)
 │       ├── metadata.yml        # ATT&CK mapping, data sources, references
 │       ├── test_data/          # sample events: true & false positives
 │       └── README.md           # hypothesis, logic, tuning notes
-├── automation/                 # Python tooling (validation, coverage, Navigator)
+├── sensor/                     # Scapy -> ECS network telemetry sensor + pcap fixtures
+├── automation/                 # Python tooling (validation, logic tests, coverage, Navigator)
 ├── attack_navigator/           # generated ATT&CK Navigator coverage layer
 ├── docs/                       # methodology and design notes
 └── .github/workflows/          # CI that validates every rule on push
@@ -39,8 +43,10 @@ Every detection answers four questions in order:
 | Detection | Technique | Tactic | Language | Category | Status |
 |---|---|---|---|---|---|
 | RDP Lateral Movement → Process Execution | [T1021.001](https://attack.mitre.org/techniques/T1021/001/) | Lateral Movement | EQL | signature | development |
-| Anomalous RC4 Kerberos TGT (Overpass-the-Hash) | [T1550.002](https://attack.mitre.org/techniques/T1550/002/) | Lateral Movement | EQL | signature | development |
+| Anomalous RC4 Kerberos TGT Request (Potential Overpass-the-Hash) | [T1550.002](https://attack.mitre.org/techniques/T1550/002/) | Lateral Movement | EQL | signature | development |
 | PowerShell Encoded Command Execution | [T1059.001](https://attack.mitre.org/techniques/T1059/001/) | Execution | ES\|QL | classic | development |
+| Authenticated Pivot: Connection → Auth → Process | [T1021.001](https://attack.mitre.org/techniques/T1021/001/) | Lateral Movement | EQL | signature | development |
+| Network Service Discovery via Port Fan-Out | [T1046](https://attack.mitre.org/techniques/T1046/) | Discovery | ES\|QL | classic | development |
 
 _Signature = my research niche. Classic = recruiter-legible baseline detections._
 
@@ -60,9 +66,15 @@ On every push and pull request to `main`, GitHub Actions runs two checks:
    ships a true- and false-positive sample.
 2. **Logic tests** (`test_detections.py`) — for every **EQL** detection, the query
    is executed against its samples with Elastic's `eql` engine and asserted to
-   fire on the true-positive and stay silent on the false-positive; sequence rules
-   are timed so `maxspan` is genuinely enforced. **ES|QL** detections have no
-   offline engine, so they are structure-validated only and reported as skipped.
+   fire on the true-positive and stay silent on the false-positive. Sequence rules
+   are timed: the RDP detection ships a false-positive whose two events are spaced
+   beyond its `maxspan` (120s vs a 60s window), so the test fails if `maxspan` is
+   not enforced. **ES|QL** detections have no offline engine and are **not
+   executed in CI** — they are structure-validated only and reported as skipped;
+   their samples are provided for manual validation on a live Elastic stack.
+3. **Sensor tests** (`test_sensor.py`) — the Scapy ECS sensor is run in
+   pcap-replay mode over its fixtures and its ECS output is asserted (RDP flow
+   labelled, scan fan-out present, benign traffic flat). No privileges needed.
 
 Each successful run also publishes a downloadable
 `detection-coverage-<run-number>` artifact containing:
@@ -95,11 +107,11 @@ python automation/validate_rules.py
 - **Detections-as-Code** — rules are text, versioned, reviewed, and tested like software.
 - **No real data** — all `test_data/` events are synthetic. No production logs, IPs, or hostnames.
 - **Traceable** — every detection maps to ATT&CK and cites its references.
-- **Falsifiable** — every detection ships a true-positive and a false-positive sample. For EQL detections CI executes the query against both and asserts the expected outcome; ES|QL samples are validated against a live stack.
+- **Falsifiable** — every detection ships a true-positive and a false-positive sample. For EQL detections CI executes the query against both and asserts the expected outcome (including a `maxspan` timing case); ES|QL samples are not executed in CI and are provided for manual validation on a live stack.
 
 ---
 
 ## Author
 
-Désiré Abdoul Kader BONZI — MSc Cybersecurity, Ritsumeikan University
+Désiré Abdoul Kader Bonzi — MSc Cybersecurity, Ritsumeikan University.
 Research: identity reachability and lateral movement detection.

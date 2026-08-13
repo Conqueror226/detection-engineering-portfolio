@@ -36,9 +36,15 @@ def _epoch_ticks(ts: str | None) -> int:
 
 
 def _to_event(doc: dict) -> "eql.Event":
-    """Build an eql.Event, deriving type from event.category and time from @timestamp."""
-    event_type = (doc.get("event", {}) or {}).get("category", "generic")
-    return eql.Event(event_type, _epoch_ticks(doc.get("@timestamp")), doc)
+    """Build an eql.Event, deriving type from event.category and time from @timestamp.
+
+    ECS models event.category as an array; a few detections use a plain string.
+    Handle both: a list takes its first element.
+    """
+    category = (doc.get("event", {}) or {}).get("category", "generic")
+    if isinstance(category, list):
+        category = category[0] if category else "generic"
+    return eql.Event(category, _epoch_ticks(doc.get("@timestamp")), doc)
 
 
 def _run(parsed, docs: list[dict]) -> int:

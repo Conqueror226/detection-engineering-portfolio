@@ -1,0 +1,40 @@
+id: T1046_network_service_discovery
+name: Network Service Discovery via Port Fan-Out
+category: classic
+status: development
+author: Désiré Abdoul Kader Bonzi
+created: 2026-08-10
+
+description: >
+  Flags one source contacting many distinct destination ports on a single host,
+  the flow-level signature of a vertical port scan, using the Scapy ECS sensor's
+  network events. Threshold-based ES|QL aggregation.
+
+query_language: esql
+query_file: query.esql
+rule_file: rule.toml
+
+platforms:
+  - network
+
+data_sources:
+  - Scapy ECS network sensor (event.category "network")
+
+attack:
+  - tactic: Discovery
+    tactic_id: TA0007
+    technique: Network Service Discovery
+    technique_id: T1046
+
+false_positives:
+  - Authorised vulnerability scanners (Nessus, OpenVAS).
+  - Asset-management and monitoring tools that probe many ports.
+  - Load balancers or health-checkers touching many service ports.
+
+references:
+  - https://attack.mitre.org/techniques/T1046/
+  - https://www.elastic.co/guide/en/ecs/current/ecs-network.html
+
+validation:
+  true_positive: test_data/true_positive.json
+  false_positive: test_data/false_positive.json

@@ -31,6 +31,9 @@ jobs:
       - name: Run detection logic tests (EQL)
         run: python automation/test_detections.py
 
+      - name: Test ECS sensor against fixtures
+        run: python automation/test_sensor.py
+
       - name: Generate coverage artifacts
         run: |
           mkdir -p artifacts

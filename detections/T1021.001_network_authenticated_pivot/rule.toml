@@ -1,0 +1,68 @@
+[metadata]
+creation_date = "2026/08/10"
+updated_date = "2026/08/10"
+maturity = "development"
+
+[rule]
+author = ["Désiré Abdoul Kader Bonzi"]
+name = "Authenticated Pivot: Network Connection to Auth to Process Execution"
+rule_id = "01c6134b-5314-43fd-98d9-2f101094a303"
+description = """
+Correlates three layers of lateral-movement evidence within five minutes on the
+same target: an east-west RDP (3389) or SMB (445) connection, a successful
+Windows logon (4624, LogonType 10 or 3), and subsequent process execution by
+that identity. Network telemetry (from the Scapy ECS sensor) corroborates host
+and identity evidence; it is not treated as standalone proof. The three stages
+join on the target host (network destination.ip == auth/process host.ip).
+"""
+type = "eql"
+language = "eql"
+license = "MIT"
+index = ["logs-network.*", "winlogbeat-*", "logs-windows.*", "logs-system.*"]
+from = "now-10m"
+interval = "5m"
+risk_score = 58
+severity = "medium"
+tags = [
+  "Domain: Endpoint",
+  "Domain: Network",
+  "OS: Windows",
+  "Use Case: Lateral Movement",
+  "Data Source: Scapy ECS Sensor",
+  "Data Source: Windows Security Event Logs",
+  "Tactic: Lateral Movement",
+]
+
+query = '''
+sequence with maxspan=5m
+  [ network where network.transport == "tcp" and destination.port in (3389, 445)
+      and network.protocol in ("rdp", "smb") ] by destination.ip
+  [ authentication where event.code == "4624" and event.outcome == "success"
+      and winlog.event_data.LogonType in ("10", "3") ] by host.ip
+  [ process where event.type == "start" ] by host.ip
+'''
+
+[[rule.threat]]
+framework = "MITRE ATT&CK"
+
+  [rule.threat.tactic]
+  id = "TA0008"
+  name = "Lateral Movement"
+  reference = "https://attack.mitre.org/tactics/TA0008/"
+
+  [[rule.threat.technique]]
+  id = "T1021"
+  name = "Remote Services"
+  reference = "https://attack.mitre.org/techniques/T1021/"
+
+    [[rule.threat.technique.subtechnique]]
+    id = "T1021.001"
+    name = "Remote Desktop Protocol"
+    reference = "https://attack.mitre.org/techniques/T1021/001/"
+
+[rule.false_positives]
+notes = [
+  "Administrators using RDP/SMB then running tools on the target.",
+  "Jump hosts and bastions where connect-then-execute is expected.",
+  "Backup/monitoring/automation identities that connect and run processes by design.",
+]

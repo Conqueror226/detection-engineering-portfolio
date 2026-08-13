@@ -1,0 +1,24 @@
+// Hypothesis:
+//   Lateral movement leaves evidence at three layers: an east-west connection to
+//   a remote-access service (RDP 3389 / SMB 445), a successful authentication on
+//   the target, and post-authentication process execution by that identity.
+//   Any one layer alone is weak; the three in sequence on the same target is the
+//   high-fidelity "authenticated pivot" signal. Network telemetry corroborates
+//   host evidence — it does not stand alone.
+//
+// Data sources:
+//   - Network: ECS events from the Scapy sensor (../../sensor), event.category "network"
+//   - Windows Security Event Log 4624 (successful logon)
+//   - Sysmon Event ID 1 / process.start
+//
+// Join model:
+//   The three stages join on the TARGET host: the network flow's destination.ip
+//   equals the host.ip on the auth and process events. This assumes IP<->host
+//   enrichment is in place (see tuning notes).
+
+sequence with maxspan=5m
+  [ network where network.transport == "tcp" and destination.port in (3389, 445)
+      and network.protocol in ("rdp", "smb") ] by destination.ip
+  [ authentication where event.code == "4624" and event.outcome == "success"
+      and winlog.event_data.LogonType in ("10", "3") ] by host.ip
+  [ process where event.type == "start" ] by host.ip
