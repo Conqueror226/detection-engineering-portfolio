@@ -4,7 +4,7 @@
 No real capture is used. Each pcap encodes a specific, documented scenario so the
 sensor's ECS output is deterministic and the detection tests are meaningful.
 
-Run:  python sensor/generate_fixtures.py
+Run:  python3 sensor/generate_fixtures.py
 Writes: sensor/fixtures/{lateral_movement,port_scan,benign}.pcap
 """
 from __future__ import annotations
