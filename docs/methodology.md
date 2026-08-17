@@ -42,3 +42,23 @@ access-controlled paths by `automation/reconstruct_case.py`. The resulting
 manifest records input/output SHA-256 values and parameters. Only aggregate,
 reviewed validation results may be added to the repository; raw evidence stays in
 controlled storage.
+
+The manifest also hashes the five context files, records the exact code revision,
+and exposes a stable `derivation_id`. The ID excludes runtime timestamps and
+performance measurements, so identical evidence, context, parameters, code, and
+derived outputs reproduce the same identifier. `generated_at_utc` and per-stage
+milliseconds remain in the manifest as operational observations.
+
+## Evidence-first automation
+
+Automation removes manual pivot latency without weakening evidence-based checks:
+
+1. platform adapters normalize Windows/network and CloudTrail records;
+2. deterministic joins establish only supported edges;
+3. identity/session-aware indexes find compatible continuations;
+4. three-state route policy returns authorized, prohibited, or unknown context;
+5. reports retain evidence references, hashes, parameters, and limitations.
+
+Machine learning is not used to assert edges, lineage, or authorization. An
+optional ranking model may operate after classification, provided the underlying
+finding and abstention state remain unchanged and visible.

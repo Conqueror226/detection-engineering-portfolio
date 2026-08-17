@@ -1,5 +1,17 @@
-# Sanctioned administrative paths. A Tier-0 reach is EXPECTED only when it matches
-# one of these (right identity, through the right jump host, to the right tier).
+# Sanctioned administrative paths. Policy metadata defines the exact scope for
+# which this fixture is complete. Outside that scope, the classifier returns
+# UNKNOWN_CONTEXT rather than treating a missing allow-list entry as prohibition.
+policy_metadata:
+  policy_id: corp-admin-routes
+  version: "1"
+  source: educational reference policy
+  valid_from: "2026-01-01"
+  valid_until: "2026-12-31"
+  complete_for:
+    - environment: on_prem
+      identity: "CORP\\dom_admin"
+      target_tier: 0
+
 approved_paths:
   - identity: "CORP\\dom_admin"
     via: JUMP-PAW01          # must transit the privileged access workstation

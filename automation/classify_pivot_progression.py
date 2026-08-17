@@ -30,6 +30,10 @@ CONFIDENCE = {
     "CREDENTIAL_TRANSITION_PROGRESSION": "high", "CRITICAL_UNAPPROVED_PATH": "highest",
 }
 
+ROUTE_AUTHORIZED = "AUTHORIZED"
+ROUTE_PROHIBITED = "PROHIBITED"
+ROUTE_UNKNOWN = "UNKNOWN_CONTEXT"
+
 
 def load_context(context_dir: pathlib.Path = CONTEXT_DIR) -> dict:
     def _load(name):
@@ -49,9 +53,36 @@ def host_is_critical(ctx, h):
 def identity_justified_tier(ctx, i):
     e = identity_entry(ctx, i); return e["justified_max_tier"] if e else None
 
-def route_authorized(ctx, identity, via_host, to_tier) -> bool:
-    return any(p["identity"] == identity and p["via"] == via_host and p["to_tier"] == to_tier
-               for p in ctx["expected_admin_paths"].get("approved_paths", []))
+def route_decision(ctx, identity, via_host, to_tier, at: datetime.datetime,
+                   environment: str = "on_prem") -> str:
+    """Return a three-state policy decision.
+
+    A missing allow-list entry is a prohibition only when the supplied policy is
+    active and explicitly complete for this environment, identity, and target
+    tier. Everywhere else the examiner gets UNKNOWN_CONTEXT, not an accusation.
+    """
+    policy = ctx["expected_admin_paths"]
+    metadata = policy.get("policy_metadata") or {}
+    try:
+        valid_from = datetime.date.fromisoformat(str(metadata["valid_from"]))
+        valid_until = datetime.date.fromisoformat(str(metadata["valid_until"]))
+    except (KeyError, TypeError, ValueError):
+        return ROUTE_UNKNOWN
+    if not (valid_from <= at.date() <= valid_until):
+        return ROUTE_UNKNOWN
+
+    if any(p.get("identity") == identity and p.get("via") == via_host
+           and p.get("to_tier") == to_tier
+           for p in policy.get("approved_paths", [])):
+        return ROUTE_AUTHORIZED
+
+    complete = any(
+        scope.get("environment") == environment
+        and scope.get("identity") == identity
+        and scope.get("target_tier") == to_tier
+        for scope in metadata.get("complete_for", [])
+    )
+    return ROUTE_PROHIBITED if complete else ROUTE_UNKNOWN
 
 def _in_window(c, at: datetime.datetime) -> bool:
     def d(key, default):
@@ -134,18 +165,24 @@ def classify_hop(ctx: dict, first: Edge, nxt: Edge) -> dict | None:
         return _finding("INSUFFICIENT_CONTEXT", path, identity, edges,
                         f"Undeclared context: hosts={unknown_hosts} identities={unknown_ids}.", modifiers)
 
+    route_state = route_decision(ctx, identity, first.target_host, dst_tier, nxt.timestamp)
+    modifiers["route_policy_state"] = route_state
+
     if dst_tier == 0 and critical:
-        if route_authorized(ctx, identity, first.target_host, dst_tier):
+        if route_state == ROUTE_AUTHORIZED:
             return _finding("EXPECTED", path, identity, edges,
                             "Tier-0 reached via a sanctioned administrative path.", modifiers)
-        return _finding("CRITICAL_UNAPPROVED_PATH", path, identity, edges,
-                        "Reaches a Tier-0/critical asset by an unauthorized route.", modifiers)
+        if route_state == ROUTE_PROHIBITED:
+            return _finding("CRITICAL_UNAPPROVED_PATH", path, identity, edges,
+                            "Reaches a Tier-0/critical asset by a route prohibited by an active, complete policy scope.", modifiers)
+        return _finding("INSUFFICIENT_CONTEXT", path, identity, edges,
+                        "Tier-0 was reached, but supplied route policy is not complete and active for this identity and tier.", modifiers)
 
     if approved_change(ctx, identity, first, nxt):
         return _finding("JUSTIFIED", path, identity, edges,
                         "New access authorized by an in-window, in-scope change ticket.", modifiers)
 
-    if route_authorized(ctx, identity, first.target_host, dst_tier):
+    if route_state == ROUTE_AUTHORIZED:
         return _finding("EXPECTED", path, identity, edges,
                         "Matches a sanctioned administrative path.", modifiers)
 

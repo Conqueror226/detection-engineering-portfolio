@@ -55,6 +55,16 @@ The current Scapy sensor parses IPv4 TCP/UDP and materializes RDP (TCP/3389 with
 Logon Type 10) and SMB (TCP/445 with Logon Type 3) candidates. Unsupported
 protocols remain an explicit limitation.
 
+### Optional AWS management evidence
+
+For a hybrid case, retain the authorized test window's CloudTrail management
+events as JSON, NDJSON, EventBridge `detail`, or an Elasticsearch `_search`
+export. The current adapter accepts successful `sts:AssumeRole` only and requires
+the event time and ID, caller principal, requested role ARN, and returned session
+identifier. Failed calls and incomplete records do not become edges. Store the
+export with the other case evidence; the runner hashes it and records it in the
+manifest.
+
 ## 4. Check time and naming before correlation
 
 PCAP timestamps and Windows event timestamps must refer to UTC and should be
@@ -74,6 +84,7 @@ python3 automation/reconstruct_case.py \
   --pcap /secure-evidence/lab-rdp-pivot-01.pcap \
   --windows /secure-evidence/SRV-APP-01-Security.evtx \
   --windows /secure-evidence/DC01-Security.evtx \
+  --cloudtrail /secure-evidence/cloudtrail-management-events.json \
   --ip-map /secure-evidence/ip_to_host.json \
   --context-dir automation/context \
   --out-dir /secure-results/lab-rdp-pivot-01
@@ -83,10 +94,11 @@ Outputs:
 
 | File | Purpose |
 |---|---|
-| `manifest.json` | Input/output SHA-256 values, parameters, UTC generation time, counts |
+| `manifest.json` | Evidence/context and output hashes, parameters, code revision, stable derivation ID, UTC generation time, counts, and per-stage batch timings |
 | `normalized/*.ndjson` | Representation-normalized network and Windows records |
 | `results/data_quality.json` | Missing fields and contract errors |
 | `results/pivot_edges.json` | Evidence-supported edges |
+| `results/reachability_edges_v2.json` | Unified on-premises and AWS evidence-supported edges |
 | `results/findings.json` | Contextual progression classifications |
 | `results/reconstruction_report.md` | Examiner-readable summary and limitations |
 
@@ -98,8 +110,13 @@ For the repository, publish only an aggregate validation note after review:
   lab), not routable addresses or account names;
 - number of source records, materialized edges, expected and observed findings;
 - any missed joins and documented reason;
-- software version or commit, parameters, and the manifest SHA-256;
+- software version or commit, parameters, stable derivation ID, and the manifest SHA-256;
 - confirmation that raw artifacts remain in controlled storage.
 
 Do not claim real-world validation until at least one retained case has a reviewed
 manifest, data-quality report, and reconstruction report.
+
+The recorded milliseconds characterize this offline batch on the examiner's
+hardware. They do not demonstrate live detection latency. Repeat runs should
+retain the same `derivation_id` even though generation time and measured duration
+will naturally differ.

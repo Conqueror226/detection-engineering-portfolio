@@ -1,0 +1,41 @@
+{
+  "Records": [
+    {
+      "eventVersion": "1.09",
+      "userIdentity": {
+        "type": "IAMUser",
+        "principalId": "AIDAEXAMPLEALICE",
+        "arn": "arn:aws:iam::111122223333:user/alice",
+        "accountId": "111122223333",
+        "userName": "alice"
+      },
+      "eventTime": "2026-08-10T10:10:00Z",
+      "eventSource": "sts.amazonaws.com",
+      "eventName": "AssumeRole",
+      "awsRegion": "ap-southeast-1",
+      "sourceIPAddress": "203.0.113.10",
+      "requestParameters": {
+        "roleArn": "arn:aws:iam::444455556666:role/SecurityAudit",
+        "roleSessionName": "fire-workshop"
+      },
+      "responseElements": {
+        "credentials": {
+          "accessKeyId": "ASIAEXAMPLESESSION"
+        },
+        "assumedRoleUser": {
+          "assumedRoleId": "AROEXAMPLE:fire-workshop",
+          "arn": "arn:aws:sts::444455556666:assumed-role/SecurityAudit/fire-workshop"
+        }
+      },
+      "eventID": "11111111-2222-4333-8444-555555555555",
+      "eventType": "AwsApiCall",
+      "managementEvent": true
+    },
+    {
+      "eventTime": "2026-08-10T10:11:00Z",
+      "eventSource": "s3.amazonaws.com",
+      "eventName": "ListBuckets",
+      "eventID": "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee"
+    }
+  ]
+}

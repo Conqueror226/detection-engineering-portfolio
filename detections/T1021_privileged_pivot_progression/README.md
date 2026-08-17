@@ -58,8 +58,10 @@ needs authentication evidence; otherwise the result is labelled
 `PRIVILEGED_DESTINATION_REACH` · `CREDENTIAL_TRANSITION_PROGRESSION` · `CRITICAL_UNAPPROVED_PATH`
 
 Entitlement (may the identity reach Tier 0?) and route authorization (was the
-sanctioned path used?) are independent — a Tier-0 reach by an unapproved route is
-`CRITICAL_UNAPPROVED_PATH` even for an entitled Domain Admin. Full table:
+sanctioned path used?) are independent. A Tier-0 route is called prohibited only
+when active policy declares itself complete for the identity and tier; otherwise
+the classifier returns `INSUFFICIENT_CONTEXT`. Within that complete scope, a
+prohibited route is `CRITICAL_UNAPPROVED_PATH` even for an entitled Domain Admin. Full table:
 `automation/context/VOCABULARY.md`.
 
 ## Contracts
@@ -78,18 +80,20 @@ Classification is meaningless without context. `automation/context/` ships small
 documented fixtures — `asset_tiers.yml`, `identity_roles.yml`,
 `expected_admin_paths.yml`, `approved_changes.yml` — the portfolio analogue of
 FIRE's pre-committed context files. In production these come from an asset
-inventory and IAM.
+inventory and IAM. `expected_admin_paths.yml` records policy identity, version,
+source, validity dates, and completeness scope so absence is not misrepresented
+as prohibition.
 
 ## Validation
 
 - **Edge rule** (`test_data/true_positive.json` / `false_positive.json`): executed
   by the EQL harness — network+4624+4672 fires; the same without 4672 does not.
-- **Progression** (`test_data/scenarios/`): 19 scenarios (baseline + adversarial: unknown/unconfirmed transition, source- and destination-session privilege, session lineage, unknown intermediate, unauthenticated standalone, distinct identities, approval window) executed by
+- **Progression** (`test_data/scenarios/`): 20 scenarios (baseline + adversarial: unknown/unconfirmed transition, source- and destination-session privilege, session lineage, unknown intermediate, unauthenticated standalone, distinct identities, approval window, incomplete route policy) executed by
   `automation/test_progression.py` with **exact** assertions (label, path,
   confidence, and count — not just "label appears"). They cover the approved PAW
   path, the unapproved Domain-Admin route to a DC (`CRITICAL_UNAPPROVED_PATH`),
   non-privileged pivots, credential transitions, expired approvals, missing
-  context, wrong identity, and out-of-window hops.
+  context, incomplete policy scope, wrong identity, and out-of-window hops.
 
 ## Honest boundaries
 
