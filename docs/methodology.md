@@ -51,7 +51,7 @@ milliseconds remain in the manifest as operational observations.
 
 ## Evidence-first automation
 
-Automation removes manual pivot latency without replacing evidence discipline:
+Automation removes manual pivot latency without weakening evidence-based checks:
 
 1. platform adapters normalize Windows/network and CloudTrail records;
 2. deterministic joins establish only supported edges;

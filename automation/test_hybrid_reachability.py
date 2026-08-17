@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Contract and evidence-discipline tests for hybrid ReachabilityEdge v2."""
+"""Contract and evidence-based tests for hybrid ReachabilityEdge v2."""
 from __future__ import annotations
 
 import json
@@ -74,7 +74,7 @@ def main() -> int:
         for failure in failures:
             print(f"       - {failure}")
         return 1
-    print("[PASS] hybrid reachability: v1 lift + CloudTrail adapter + explicit bridge discipline")
+    print("[PASS] hybrid reachability: v1 lift + CloudTrail adapter + explicit bridge requirement")
     return 0
 
 
