@@ -93,7 +93,7 @@ def test_https_fanout(failures: list[str]) -> None:
 
 def main() -> int:
     if not FIXTURES.exists() or not any(FIXTURES.glob("*.pcap")):
-        print("No fixtures found. Run: python sensor/generate_fixtures.py")
+        print("No fixtures found. Run: python3 sensor/generate_fixtures.py")
         return 1
 
     failures: list[str] = []

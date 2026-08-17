@@ -65,8 +65,8 @@ _Related behavior (not formal ATT&CK coverage): T1078.002 — valid domain crede
 Regenerate the coverage view and ATT&CK Navigator layer from metadata:
 
 ```bash
-python automation/coverage_report.py
-python automation/generate_navigator_layer.py
+python3 automation/coverage_report.py
+python3 automation/generate_navigator_layer.py
 ```
 
 ### CI artifacts
@@ -110,11 +110,11 @@ open [ATT&CK Navigator](https://mitre-attack.github.io/attack-navigator/), choos
 ```bash
 git clone https://github.com/<your-username>/detection-engineering-portfolio.git
 cd detection-engineering-portfolio
-python -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
+python3 -m venv .venv && source .venv/bin/activate
+python3 -m pip install -r requirements.txt
 
 # validate all detections
-python automation/validate_rules.py
+python3 automation/validate_rules.py
 ```
 
 ---
@@ -127,7 +127,7 @@ hashes every input, reports missing fields, preserves normalized evidence, and
 produces contract-validated edges, findings, and a reconstruction report.
 
 ```bash
-python automation/reconstruct_case.py \
+python3 automation/reconstruct_case.py \
   --case-name lab-rdp-pivot-01 \
   --pcap /secure-evidence/lab-rdp-pivot-01.pcap \
   --windows /secure-evidence/SRV-APP-01-Security.evtx \

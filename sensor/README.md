@@ -9,10 +9,10 @@ as NDJSON. It is a *telemetry producer only* — detection and correlation live 
 
 ```bash
 # Offline replay (no privileges) — used by CI and tests
-python sensor/sensor.py --pcap sensor/fixtures/lateral_movement.pcap
+python3 sensor/sensor.py --pcap sensor/fixtures/lateral_movement.pcap
 
 # Live capture (real-time via AsyncSniffer; requires root/Administrator)
-sudo python sensor/sensor.py --iface eth0 --out network.ndjson --flush-interval 30
+sudo python3 sensor/sensor.py --iface eth0 --out network.ndjson --flush-interval 30
 ```
 
 `--pcap FILE` | `--iface IFACE` (mutually exclusive), `--out FILE` (default stdout),
@@ -54,7 +54,7 @@ port.
 | `benign.pcap` | ordinary HTTPS + DNS | negative case |
 | `https_fanout.pcap` | 15 HTTPS connections to **one** server port | negative: many connections ≠ a scan |
 
-Regenerate with `python sensor/generate_fixtures.py`.
+Regenerate with `python3 sensor/generate_fixtures.py`.
 
 ## Design notes
 

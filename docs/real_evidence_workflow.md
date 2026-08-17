@@ -69,7 +69,7 @@ match; the runner does not infer an unrelated host.
 ## 5. Run the offline reconstruction
 
 ```bash
-python automation/reconstruct_case.py \
+python3 automation/reconstruct_case.py \
   --case-name lab-rdp-pivot-01 \
   --pcap /secure-evidence/lab-rdp-pivot-01.pcap \
   --windows /secure-evidence/SRV-APP-01-Security.evtx \
