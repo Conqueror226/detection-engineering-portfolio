@@ -23,7 +23,27 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 
 logging.getLogger("scapy").setLevel(logging.ERROR)
-from scapy.all import IP, TCP, UDP, AsyncSniffer, rdpcap  # noqa: E402
+# File replay must remain usable in restricted/offline CI environments where
+# interface discovery and route-table netlink sockets are intentionally blocked.
+# Live capture still works when an explicit --iface is supplied on a normal host.
+from scapy.config import conf  # noqa: E402
+from scapy.interfaces import NetworkInterfaceDict  # noqa: E402
+
+conf.route_autoload = False
+conf.route6_autoload = False
+_original_reload = NetworkInterfaceDict.reload
+
+
+def _permission_safe_reload(self):
+    try:
+        return _original_reload(self)
+    except PermissionError:
+        self.clear()
+        return None
+
+
+NetworkInterfaceDict.reload = _permission_safe_reload
+from scapy.all import IP, TCP, UDP, AsyncSniffer, PcapReader, rdpcap  # noqa: E402
 
 ECS_VERSION = "8.11.0"
 PORT_PROTO = {

@@ -3,7 +3,7 @@
 Single-host detections can see a privileged logon, but not whether that session
 *created a new path*, *crossed an administrative boundary*, or *expanded access
 toward critical assets*. This portfolio reconstructs that progression in four
-stages: raw telemetry becomes a trustworthy **edge**, the edge is judged against
+stages: raw telemetry becomes an evidence-supported **edge**, the edge is judged against
 organisational **context**, edges compose into a reachability **graph**, and the
 graph yields a **progression finding**.
 
@@ -47,7 +47,7 @@ Raw telemetry → PivotEdge → ProgressionFinding
 | Stage | Where | Responsibility |
 |---|---|---|
 | Telemetry | `sensor/` | ECS network flows |
-| Edge | Elastic edge *candidate* rule + `materialize_pivot_edges.py` | one trustworthy pivot edge with enforced session joins (service/LogonType compat, IP + logon-id joins, 4648 on the outgoing hop, session lineage) |
+| Edge | Elastic edge *candidate* rule + `materialize_pivot_edges.py` | one evidence-supported pivot edge with enforced session joins (service/LogonType compat, IP + logon-id joins, 4648 on the outgoing hop, session lineage) |
 | Context | `automation/context/` | tiers, roles, sanctioned paths, approvals, known reachability |
 | Graph + finding | `build_reachability_graph.py` · `classify_pivot_progression.py` | compose edges, classify progression |
 
@@ -71,7 +71,9 @@ still critical. That separation is what earlier single-hop framing missed.
   strict session joins are enforced and exercised end-to-end by
   `automation/test_pipeline.py` (pcap → sensor → materializer → graph → finding).
   The EQL rule remains an edge *candidate* generator; the materializer is what
-  makes an edge trustworthy. Live Elastic import/ES|QL execution is the only step
-  still outside CI (no stack in the sandbox).
+  makes an edge evidence-supported. Native EVTX/Elastic-export ingestion and real
+  PCAP replay are implemented by `evidence_io.py` and `reconstruct_case.py`;
+  operational validation still requires a separately retained authorized lab case.
+  Live Elastic rule import/ES|QL execution remains outside CI.
 - **Bounded, not a full graph engine** — arbitrary-length reachability is the FIRE
   engine; this shows a verified bounded slice and points to FIRE for the general case.

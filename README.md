@@ -28,9 +28,12 @@ detection-engineering-portfolio/
 │       └── README.md           # hypothesis, logic, tuning notes
 ├── sensor/                     # Scapy -> ECS network telemetry sensor + pcap fixtures
 ├── automation/                 # Python tooling (validation, logic/sensor/progression tests, coverage)
+│   ├── evidence_io.py               # EVTX/JSON/NDJSON/Elastic export normalization
+│   ├── reconstruct_case.py           # offline evidence -> edges -> findings -> report
 │   ├── build_reachability_graph.py   # edges -> directed reachability graph
 │   ├── classify_pivot_progression.py # progression classifier (admin blind-spot)
 │   └── context/                      # tier/role/path/approval context (FIRE-style)
+├── cases/                      # instructions only; real case evidence is git-ignored
 ├── attack_navigator/           # generated ATT&CK Navigator coverage layer
 ├── docs/                       # methodology and design notes
 └── .github/workflows/          # CI that validates every rule on push
@@ -84,6 +87,11 @@ On every push and pull request to `main`, GitHub Actions runs the full gate set:
 3. **Sensor tests** (`test_sensor.py`) — the Scapy ECS sensor is run in
    pcap-replay mode over its fixtures and its ECS output is asserted (RDP flow
    labelled, scan fan-out present, benign traffic flat). No privileges needed.
+4. **Real-input adapter and case-runner tests** (`test_evidence_io.py`,
+   `test_reconstruct_case.py`) — verify JSON, NDJSON, Elasticsearch exports,
+   host-map enrichment, evidence hashing, output contracts, and the complete
+   evidence-to-report workflow. Native EVTX uses the same adapter in operational
+   runs; real evidence is deliberately not committed to CI.
 
 Each successful run also publishes a downloadable
 `detection-coverage-<run-number>` artifact containing:
@@ -111,10 +119,37 @@ python automation/validate_rules.py
 
 ---
 
+## Reconstruct a real lab case
+
+The offline case runner accepts native Windows Security EVTX, ECS/Winlogbeat
+JSON or NDJSON, Elasticsearch `_search` exports, and one or more real PCAPs. It
+hashes every input, reports missing fields, preserves normalized evidence, and
+produces contract-validated edges, findings, and a reconstruction report.
+
+```bash
+python automation/reconstruct_case.py \
+  --case-name lab-rdp-pivot-01 \
+  --pcap /secure-evidence/lab-rdp-pivot-01.pcap \
+  --windows /secure-evidence/SRV-APP-01-Security.evtx \
+  --windows /secure-evidence/DC01-Security.evtx \
+  --ip-map /secure-evidence/ip_to_host.json \
+  --out-dir /secure-results/lab-rdp-pivot-01
+```
+
+The current materializer is intentionally bounded to **RDP and SMB** and still
+requires the strict network/authentication joins documented in
+[`docs/architecture.md`](docs/architecture.md). See
+[`docs/real_evidence_workflow.md`](docs/real_evidence_workflow.md) for authorized
+collection, host mapping, clock checks, Elastic export shapes, and interpretation.
+
+---
+
 ## Design principles
 
 - **Detections-as-Code** — rules are text, versioned, reviewed, and tested like software.
-- **No real data** — all `test_data/` events are synthetic. No production logs, IPs, or hostnames.
+- **No sensitive evidence in Git** — committed tests remain synthetic, while the
+  offline runner processes real lab artifacts from external, git-ignored paths
+  and records their SHA-256 provenance.
 - **Traceable** — every detection maps to ATT&CK and cites its references.
 - **Falsifiable** — every detection ships a true-positive and a false-positive sample. For EQL detections CI executes the query against both and asserts the expected outcome (including a `maxspan` timing case); ES|QL samples are not executed in CI and are provided for manual validation on a live stack.
 

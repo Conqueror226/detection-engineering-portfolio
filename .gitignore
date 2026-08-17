@@ -18,5 +18,14 @@ artifacts/
 # Generated sensor output / ad-hoc captures (keep committed fixtures)
 *.ndjson
 *.pcap
+*.pcapng
+*.evtx
+*.etl
 !sensor/fixtures/
 !sensor/fixtures/*.pcap
+
+# Real case material and derived reports stay outside version control.
+cases/*/raw/
+cases/*/output/
+case-output/
+evidence/

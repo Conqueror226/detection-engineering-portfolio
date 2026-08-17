@@ -2,5 +2,8 @@
 PyYAML>=6.0
 toml>=0.10.2
 eql>=1.0.1
-scapy>=2.5.0
+# 2.7 eagerly opens a netlink socket at import time, which breaks offline CI
+# sandboxes that permit file replay but intentionally block interface discovery.
+scapy>=2.5.0,<2.7.0
 jsonschema>=4.0
+python-evtx>=0.8.1
