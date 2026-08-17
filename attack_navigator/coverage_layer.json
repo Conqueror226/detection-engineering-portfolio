@@ -1,7 +1,7 @@
 {
   "name": "Detection Portfolio Coverage",
   "versions": {
-    "attack": "15",
+    "attack": "19.2",
     "navigator": "5.0.0",
     "layer": "4.5"
   },
@@ -10,9 +10,16 @@
   "techniques": [
     {
       "techniqueID": "T1021.001",
+      "score": 3,
+      "color": "#2E7D32",
+      "comment": "Authenticated Pivot: Network Connection to Auth to Process Execution; RDP Lateral Movement Followed by Process Execution; Privileged Pivot Edge (network + logon + special privileges)",
+      "enabled": true
+    },
+    {
+      "techniqueID": "T1021.002",
       "score": 2,
       "color": "#2E7D32",
-      "comment": "Authenticated Pivot: Network Connection to Auth to Process Execution; RDP Lateral Movement Followed by Process Execution",
+      "comment": "Authenticated Pivot: Network Connection to Auth to Process Execution; Privileged Pivot Edge (network + logon + special privileges)",
       "enabled": true
     },
     {
@@ -43,7 +50,7 @@
       "#2E7D32"
     ],
     "minValue": 0,
-    "maxValue": 2
+    "maxValue": 3
   },
   "legendItems": [
     {

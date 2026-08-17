@@ -1,0 +1,9 @@
+# Identity role + justified reachability baseline.
+# justified_max_tier: the highest-privilege tier this identity is expected to reach
+# (numerically lowest). Reaching below it is unjustified unless via an approved path.
+identities:
+  "CORP\\alice":      { role: workstation_user,   is_admin: false, justified_max_tier: 2 }
+  "CORP\\bob":        { role: server_operator,     is_admin: false, justified_max_tier: 1 }
+  "CORP\\dom_admin":  { role: domain_admin,        is_admin: true,  justified_max_tier: 0 }
+  "CORP\\svc-backup": { role: service_account,     is_admin: false, justified_max_tier: 1 }
+default:              { role: unknown,             is_admin: false, justified_max_tier: 2 }

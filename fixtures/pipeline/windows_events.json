@@ -1,0 +1,74 @@
+[
+  {
+    "@timestamp": "2026-08-10T10:00:30Z",
+    "event": {
+      "code": "4624",
+      "outcome": "success",
+      "id": "l1"
+    },
+    "host": {
+      "ip": "10.0.0.60",
+      "name": "SRV-APP-01"
+    },
+    "winlog": {
+      "event_data": {
+        "TargetUserName": "CORP\\dom_admin",
+        "TargetLogonId": "0xA1",
+        "IpAddress": "10.0.0.10",
+        "LogonType": "10"
+      }
+    }
+  },
+  {
+    "@timestamp": "2026-08-10T10:00:31Z",
+    "event": {
+      "code": "4672",
+      "id": "p1"
+    },
+    "host": {
+      "ip": "10.0.0.60"
+    },
+    "winlog": {
+      "event_data": {
+        "SubjectLogonId": "0xA1",
+        "SubjectUserName": "CORP\\dom_admin"
+      }
+    }
+  },
+  {
+    "@timestamp": "2026-08-10T10:01:30Z",
+    "event": {
+      "code": "4624",
+      "outcome": "success",
+      "id": "l2"
+    },
+    "host": {
+      "ip": "10.0.0.90",
+      "name": "DC01"
+    },
+    "winlog": {
+      "event_data": {
+        "TargetUserName": "CORP\\dom_admin",
+        "TargetLogonId": "0xB2",
+        "IpAddress": "10.0.0.60",
+        "LogonType": "10"
+      }
+    }
+  },
+  {
+    "@timestamp": "2026-08-10T10:01:31Z",
+    "event": {
+      "code": "4672",
+      "id": "p2"
+    },
+    "host": {
+      "ip": "10.0.0.90"
+    },
+    "winlog": {
+      "event_data": {
+        "SubjectLogonId": "0xB2",
+        "SubjectUserName": "CORP\\dom_admin"
+      }
+    }
+  }
+]

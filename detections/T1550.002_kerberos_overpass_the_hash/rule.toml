@@ -33,6 +33,12 @@ tags = [
   "Tactic: Lateral Movement",
 ]
 
+false_positives = [
+  "Legacy systems or applications that still negotiate RC4 Kerberos encryption.",
+  "Domains mid-migration to AES where RC4 has not yet been disabled.",
+  "Service or interop accounts explicitly configured for RC4.",
+]
+
 query = '''
 authentication where
   event.code == "4768" and
@@ -60,10 +66,3 @@ framework = "MITRE ATT&CK"
     id = "T1550.002"
     name = "Pass the Hash"
     reference = "https://attack.mitre.org/techniques/T1550/002/"
-
-[rule.false_positives]
-notes = [
-  "Legacy systems or applications that still negotiate RC4 Kerberos encryption.",
-  "Domains mid-migration to AES where RC4 has not yet been disabled.",
-  "Service or interop accounts explicitly configured for RC4.",
-]

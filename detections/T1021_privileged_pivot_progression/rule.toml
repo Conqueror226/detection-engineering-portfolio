@@ -1,0 +1,74 @@
+[metadata]
+creation_date = "2026/08/10"
+updated_date = "2026/08/10"
+maturity = "development"
+
+[rule]
+author = ["Désiré Abdoul Kader Bonzi"]
+name = "Privileged Pivot Edge (network + logon + special privileges)"
+rule_id = "7c3f9a20-1d84-4a6e-9b52-0f2a51c8d4e3"
+description = """
+Establishes a privileged pivot edge: a network RDP/SMB connection to a target,
+a matching successful logon (4624), and special privileges assigned to that
+session (4672), correlated on the target host within two minutes. This rule is
+edge establishment only — the multi-hop progression that exposes administrative
+blind spots is reconstructed by the Python progression layer
+(automation/classify_pivot_progression.py) from these edges plus tier/role
+context. Privileged (4672) is context, not proof of malice.
+"""
+type = "eql"
+language = "eql"
+license = "MIT"
+index = ["logs-network.*", "winlogbeat-*", "logs-windows.*", "logs-system.*"]
+from = "now-10m"
+interval = "5m"
+risk_score = 47
+severity = "medium"
+tags = [
+  "Domain: Endpoint",
+  "Domain: Network",
+  "OS: Windows",
+  "Use Case: Lateral Movement",
+  "Data Source: Scapy ECS Sensor",
+  "Data Source: Windows Security Event Logs",
+  "Tactic: Lateral Movement",
+]
+
+
+false_positives = [
+  "Administrators legitimately establishing privileged sessions on servers.",
+  "Automation/service accounts that hold privileges by design.",
+  "Jump hosts / bastions where privileged remote sessions are expected.",
+]
+
+query = '''
+sequence with maxspan=2m
+  [ network where network.transport == "tcp" and destination.port in (3389, 445)
+      and network.protocol in ("rdp", "smb") ] by destination.ip
+  [ authentication where event.code == "4624" and event.outcome == "success"
+      and winlog.event_data.LogonType in ("10", "3") ] by host.ip
+  [ authentication where event.code == "4672" ] by host.ip
+'''
+
+[[rule.threat]]
+framework = "MITRE ATT&CK"
+
+  [rule.threat.tactic]
+  id = "TA0008"
+  name = "Lateral Movement"
+  reference = "https://attack.mitre.org/tactics/TA0008/"
+
+  [[rule.threat.technique]]
+  id = "T1021"
+  name = "Remote Services"
+  reference = "https://attack.mitre.org/techniques/T1021/"
+
+    [[rule.threat.technique.subtechnique]]
+    id = "T1021.001"
+    name = "Remote Desktop Protocol"
+    reference = "https://attack.mitre.org/techniques/T1021/001/"
+
+    [[rule.threat.technique.subtechnique]]
+    id = "T1021.002"
+    name = "SMB/Windows Admin Shares"
+    reference = "https://attack.mitre.org/techniques/T1021/002/"

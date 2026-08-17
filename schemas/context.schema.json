@@ -1,0 +1,13 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Context",
+  "type": "object",
+  "required": ["asset_tiers", "identity_roles", "expected_admin_paths", "approved_changes", "known_reachability"],
+  "properties": {
+    "asset_tiers": {"type": "object", "required": ["hosts", "default"]},
+    "identity_roles": {"type": "object", "required": ["identities", "default"]},
+    "expected_admin_paths": {"type": "object", "required": ["approved_paths"]},
+    "approved_changes": {"type": "object", "required": ["approved_changes"]},
+    "known_reachability": {"type": "object", "required": ["known_edges"]}
+  }
+}

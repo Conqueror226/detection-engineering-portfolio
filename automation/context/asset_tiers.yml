@@ -1,0 +1,14 @@
+# Asset tier + criticality context (Microsoft AD tier model).
+# Tier 0 = identity/control plane (DCs, PKI, admin infra) — the crown jewels.
+# Tier 1 = servers / application & data.
+# Tier 2 = workstations.
+# Progression toward a lower-numbered (higher-privilege) tier is the signal.
+hosts:
+  DC01:        { tier: 0, critical: true,  role: domain_controller }
+  PKI01:       { tier: 0, critical: true,  role: certificate_authority }
+  JUMP-PAW01:  { tier: 0, critical: false, role: privileged_access_workstation }  # sanctioned Tier-0 entry point
+  SRV-APP-01:  { tier: 1, critical: false, role: application_server }
+  SRV-FILE-02: { tier: 1, critical: false, role: file_server }
+  WS-ENG-12:   { tier: 2, critical: false, role: workstation }
+  WS-FIN-07:   { tier: 2, critical: false, role: workstation }
+default:       { tier: 2, critical: false, role: unknown }

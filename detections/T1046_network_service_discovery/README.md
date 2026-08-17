@@ -26,7 +26,10 @@ An ES|QL aggregation over the sensor's network events:
 3. Keep pairs where the distinct-port count crosses the threshold (`>= 15`).
 
 `COUNT_DISTINCT` is why this is ES|QL and not EQL — EQL has no distinct-count
-threshold. `METADATA _id, _version, _index` is carried for alert dedup.
+threshold. Note: `_id` is **not** preserved through `STATS` (aggregate result rows
+become alerts), so it provides no source-document deduplication here. The rule's
+`from = "now-10m"` gives a rolling ten-minute window; use alert suppression on
+`source.ip`/`destination.ip` if repeated aggregate alerts are noisy.
 
 ## Data source
 

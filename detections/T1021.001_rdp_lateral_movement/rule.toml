@@ -29,6 +29,12 @@ tags = [
   "Tactic: Lateral Movement",
 ]
 
+false_positives = [
+  "Legitimate administrative RDP sessions where an admin logs in and runs tools.",
+  "Jump hosts / bastion servers where remote logon followed by activity is expected.",
+  "Automation or monitoring accounts that use RDP by design.",
+]
+
 query = '''
 sequence by winlog.computer_name with maxspan=1m
   [ authentication where
@@ -57,10 +63,3 @@ framework = "MITRE ATT&CK"
     id = "T1021.001"
     name = "Remote Desktop Protocol"
     reference = "https://attack.mitre.org/techniques/T1021/001/"
-
-[rule.false_positives]
-notes = [
-  "Legitimate administrative RDP sessions where an admin logs in and runs tools.",
-  "Jump hosts / bastion servers where remote logon followed by activity is expected.",
-  "Automation or monitoring accounts that use RDP by design.",
-]

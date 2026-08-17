@@ -33,6 +33,12 @@ tags = [
   "Tactic: Lateral Movement",
 ]
 
+false_positives = [
+  "Administrators using RDP/SMB then running tools on the target.",
+  "Jump hosts and bastions where connect-then-execute is expected.",
+  "Backup/monitoring/automation identities that connect and run processes by design.",
+]
+
 query = '''
 sequence with maxspan=5m
   [ network where network.transport == "tcp" and destination.port in (3389, 445)
@@ -60,9 +66,7 @@ framework = "MITRE ATT&CK"
     name = "Remote Desktop Protocol"
     reference = "https://attack.mitre.org/techniques/T1021/001/"
 
-[rule.false_positives]
-notes = [
-  "Administrators using RDP/SMB then running tools on the target.",
-  "Jump hosts and bastions where connect-then-execute is expected.",
-  "Backup/monitoring/automation identities that connect and run processes by design.",
-]
+    [[rule.threat.technique.subtechnique]]
+    id = "T1021.002"
+    name = "SMB/Windows Admin Shares"
+    reference = "https://attack.mitre.org/techniques/T1021/002/"

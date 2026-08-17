@@ -27,7 +27,10 @@ detection-engineering-portfolio/
 │       ├── test_data/          # sample events: true & false positives
 │       └── README.md           # hypothesis, logic, tuning notes
 ├── sensor/                     # Scapy -> ECS network telemetry sensor + pcap fixtures
-├── automation/                 # Python tooling (validation, logic tests, coverage, Navigator)
+├── automation/                 # Python tooling (validation, logic/sensor/progression tests, coverage)
+│   ├── build_reachability_graph.py   # edges -> directed reachability graph
+│   ├── classify_pivot_progression.py # progression classifier (admin blind-spot)
+│   └── context/                      # tier/role/path/approval context (FIRE-style)
 ├── attack_navigator/           # generated ATT&CK Navigator coverage layer
 ├── docs/                       # methodology and design notes
 └── .github/workflows/          # CI that validates every rule on push
@@ -35,6 +38,9 @@ detection-engineering-portfolio/
 
 Every detection answers four questions in order:
 **hypothesis → query → validation → ATT&CK mapping.**
+
+Architecture at a glance: [`docs/architecture.md`](docs/architecture.md) — the three
+evidence layers (network → identity → endpoint) feeding the correlation rule.
 
 ---
 
@@ -47,8 +53,11 @@ Every detection answers four questions in order:
 | PowerShell Encoded Command Execution | [T1059.001](https://attack.mitre.org/techniques/T1059/001/) | Execution | ES\|QL | classic | development |
 | Authenticated Pivot: Connection → Auth → Process | [T1021.001](https://attack.mitre.org/techniques/T1021/001/) | Lateral Movement | EQL | signature | development |
 | Network Service Discovery via Port Fan-Out | [T1046](https://attack.mitre.org/techniques/T1046/) | Discovery | ES\|QL | classic | development |
+| Privileged Pivot Progression (edge + graph) | [T1021.001](https://attack.mitre.org/techniques/T1021/001/) · [T1021.002](https://attack.mitre.org/techniques/T1021/002/) | Lateral Movement | EQL + Python | signature | development |
 
 _Signature = my research niche. Classic = recruiter-legible baseline detections._
+
+_Related behavior (not formal ATT&CK coverage): T1078.002 — valid domain credentials may enable the remote-service pivots. MITRE does not assign T1078 to Lateral Movement; it is cited as related evidence only._
 
 Regenerate the coverage view and ATT&CK Navigator layer from metadata:
 
@@ -59,7 +68,7 @@ python automation/generate_navigator_layer.py
 
 ### CI artifacts
 
-On every push and pull request to `main`, GitHub Actions runs two checks:
+On every push and pull request to `main`, GitHub Actions runs the full gate set: contract + context validation (`validate_schemas.py`, `validate_context.py`), rule-structure validation, the EQL logic tests, the sensor tests, the edge-contract and materialization tests, the progression scenarios, and the end-to-end pipeline test (pcap → sensor → materializer → graph → finding):
 
 1. **Structure validation** (`validate_rules.py`) — required fields exist,
    referenced files are present, ATT&CK IDs are well-formed, and each detection
@@ -113,5 +122,5 @@ python automation/validate_rules.py
 
 ## Author
 
-Désiré Abdoul Kader Bonzi — MSc Cybersecurity, Ritsumeikan University.
+Désiré Abdoul Kader Bonzi — MSc candidate (expected September 2026), Ritsumeikan University.
 Research: identity reachability and lateral movement detection.

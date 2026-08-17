@@ -1,0 +1,20 @@
+[
+  {
+    "edge_id": "e0028",
+    "@timestamp": "2026-08-10T10:00:00Z",
+    "source_host": "WS-ENG-12",
+    "target_host": "SRV-APP-01",
+    "identity": "CORP\\bob",
+    "effective_identity": "CORP\\bob",
+    "service": "rdp",
+    "logon_id": "0xe0028",
+    "privilege_state": "confirmed",
+    "auth_state": "absent",
+    "credential_transition": null,
+    "evidence_refs": {
+      "network": "net-e0028",
+      "logon": "log-e0028",
+      "privilege": "priv-e0028"
+    }
+  }
+]

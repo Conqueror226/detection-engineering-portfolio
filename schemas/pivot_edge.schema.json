@@ -1,0 +1,159 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "PivotEdge",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "edge_id",
+    "@timestamp",
+    "source_host",
+    "target_host",
+    "identity",
+    "effective_identity",
+    "service",
+    "privilege_state",
+    "auth_state",
+    "evidence_refs"
+  ],
+  "properties": {
+    "edge_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "@timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "source_host": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_ip": {
+      "type": "string",
+      "anyOf": [
+        {
+          "format": "ipv4"
+        },
+        {
+          "format": "ipv6"
+        }
+      ]
+    },
+    "target_host": {
+      "type": "string",
+      "minLength": 1
+    },
+    "target_ip": {
+      "type": "string",
+      "anyOf": [
+        {
+          "format": "ipv4"
+        },
+        {
+          "format": "ipv6"
+        }
+      ]
+    },
+    "identity": {
+      "type": "string",
+      "minLength": 1
+    },
+    "effective_identity": {
+      "type": "string",
+      "minLength": 1
+    },
+    "logon_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "service": {
+      "type": "string",
+      "enum": [
+        "rdp",
+        "smb"
+      ]
+    },
+    "privilege_state": {
+      "type": "string",
+      "enum": [
+        "confirmed",
+        "absent",
+        "unknown"
+      ]
+    },
+    "auth_state": {
+      "type": "string",
+      "enum": [
+        "confirmed",
+        "absent",
+        "unknown"
+      ]
+    },
+    "credential_transition": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "required": [
+        "from_identity",
+        "to_identity",
+        "state"
+      ],
+      "properties": {
+        "from_identity": {
+          "type": "string",
+          "minLength": 1
+        },
+        "to_identity": {
+          "type": "string",
+          "minLength": 1
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "confirmed",
+            "unknown"
+          ]
+        },
+        "evidence_ref": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "evidence_refs": {
+      "type": "object",
+      "minProperties": 1,
+      "properties": {
+        "network": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "logon": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "privilege": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "source_logon_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  }
+}

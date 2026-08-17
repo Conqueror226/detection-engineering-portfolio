@@ -14,3 +14,9 @@ artifacts/
 
 # Generated (optional: comment out to commit the Navigator layer)
 # attack_navigator/coverage_layer.json
+
+# Generated sensor output / ad-hoc captures (keep committed fixtures)
+*.ndjson
+*.pcap
+!sensor/fixtures/
+!sensor/fixtures/*.pcap

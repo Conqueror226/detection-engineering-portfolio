@@ -1,0 +1,26 @@
+// Role: EDGE ESTABLISHMENT for the privileged-pivot progression analytic.
+//   This Elastic rule produces a privileged pivot EDGE CANDIDATE — a *privileged pivot
+//   edge*: a network RDP/SMB connection to a target, a matching successful logon
+//   on that target, and special privileges assigned to the session (4672). The
+//   multi-hop PROGRESSION and identity-continuity logic live in the Python layer
+//   (automation/build_reachability_graph.py + classify_pivot_progression.py),
+//   which chains these edges across hosts and applies tier/role context.
+//
+// Why the split: one EQL sequence cannot enforce both the network-source->auth
+//   join and the auth-user->process-user join (join keys must correspond across
+//   stages, and network events carry no username). EQL emits the edge; Python
+//   maintains state across hosts. See README.
+//
+// Data sources:
+//   - Network: Scapy ECS sensor (event.category "network")
+//   - Windows Security 4624 (successful logon), 4672 (special privileges assigned)
+//
+// Join: network destination.ip == auth host.ip (the target). Identity is carried
+//   on the 4624 (TargetUserName) into the edge record for the Python layer.
+
+sequence with maxspan=2m
+  [ network where network.transport == "tcp" and destination.port in (3389, 445)
+      and network.protocol in ("rdp", "smb") ] by destination.ip
+  [ authentication where event.code == "4624" and event.outcome == "success"
+      and winlog.event_data.LogonType in ("10", "3") ] by host.ip
+  [ authentication where event.code == "4672" ] by host.ip

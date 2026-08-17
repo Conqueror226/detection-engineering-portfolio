@@ -1,7 +1,11 @@
 [
   {
     "@timestamp": "2025-08-10T10:00:00Z",
+    "ecs": {
+      "version": "8.11.0"
+    },
     "event": {
+      "kind": "event",
       "category": [
         "network"
       ],
@@ -9,65 +13,55 @@
         "connection"
       ],
       "action": "network_flow",
-      "duration": 49999952
+      "module": "network_flow",
+      "dataset": "network_flow.flow",
+      "duration": 19999980
+    },
+    "observer": {
+      "hostname": "sensor-host",
+      "type": "sensor",
+      "product": "scapy-ecs-sensor",
+      "vendor": "portfolio"
+    },
+    "client": {
+      "ip": "10.20.4.60",
+      "port": 51000,
+      "packets": 2,
+      "bytes": 288
+    },
+    "server": {
+      "ip": "203.0.113.10",
+      "port": 443,
+      "packets": 1,
+      "bytes": 54
     },
     "source": {
       "ip": "10.20.4.60",
-      "port": 51001
+      "port": 51000,
+      "packets": 2,
+      "bytes": 288
     },
     "destination": {
-      "ip": "142.250.190.46",
-      "port": 443
+      "ip": "203.0.113.10",
+      "port": 443,
+      "packets": 1,
+      "bytes": 54
     },
     "network": {
       "transport": "tcp",
       "protocol": "https",
-      "packets": 4,
-      "bytes": 816
-    },
-    "host": {
-      "name": "WS-FIN-07"
-    },
-    "observer": {
-      "type": "scapy-ecs-sensor"
-    }
-  },
-  {
-    "@timestamp": "2025-08-10T10:00:00.010000Z",
-    "event": {
-      "category": [
-        "network"
-      ],
-      "type": [
-        "connection"
-      ],
-      "action": "network_flow",
-      "duration": 0
-    },
-    "source": {
-      "ip": "142.250.190.46",
-      "port": 443
-    },
-    "destination": {
-      "ip": "10.20.4.60",
-      "port": 51001
-    },
-    "network": {
-      "transport": "tcp",
-      "protocol": null,
-      "packets": 1,
-      "bytes": 54
-    },
-    "host": {
-      "name": "WS-FIN-07"
-    },
-    "observer": {
-      "type": "scapy-ecs-sensor"
+      "packets": 3,
+      "bytes": 342,
+      "direction": "unknown"
     }
   },
   {
     "@timestamp": "2025-08-10T10:00:00.100000Z",
+    "ecs": {
+      "version": "8.11.0"
+    },
     "event": {
+      "kind": "event",
       "category": [
         "network"
       ],
@@ -75,27 +69,774 @@
         "connection"
       ],
       "action": "network_flow",
-      "duration": 0
+      "module": "network_flow",
+      "dataset": "network_flow.flow",
+      "duration": 19999980
+    },
+    "observer": {
+      "hostname": "sensor-host",
+      "type": "sensor",
+      "product": "scapy-ecs-sensor",
+      "vendor": "portfolio"
+    },
+    "client": {
+      "ip": "10.20.4.60",
+      "port": 51001,
+      "packets": 2,
+      "bytes": 288
+    },
+    "server": {
+      "ip": "203.0.113.10",
+      "port": 443,
+      "packets": 1,
+      "bytes": 54
     },
     "source": {
       "ip": "10.20.4.60",
-      "port": 55000
+      "port": 51001,
+      "packets": 2,
+      "bytes": 288
     },
     "destination": {
-      "ip": "192.168.1.1",
-      "port": 53
+      "ip": "203.0.113.10",
+      "port": 443,
+      "packets": 1,
+      "bytes": 54
     },
     "network": {
-      "transport": "udp",
-      "protocol": "dns",
-      "packets": 1,
-      "bytes": 82
+      "transport": "tcp",
+      "protocol": "https",
+      "packets": 3,
+      "bytes": 342,
+      "direction": "unknown"
+    }
+  },
+  {
+    "@timestamp": "2025-08-10T10:00:00.200000Z",
+    "ecs": {
+      "version": "8.11.0"
     },
-    "host": {
-      "name": "WS-FIN-07"
+    "event": {
+      "kind": "event",
+      "category": [
+        "network"
+      ],
+      "type": [
+        "connection"
+      ],
+      "action": "network_flow",
+      "module": "network_flow",
+      "dataset": "network_flow.flow",
+      "duration": 19999980
     },
     "observer": {
-      "type": "scapy-ecs-sensor"
+      "hostname": "sensor-host",
+      "type": "sensor",
+      "product": "scapy-ecs-sensor",
+      "vendor": "portfolio"
+    },
+    "client": {
+      "ip": "10.20.4.60",
+      "port": 51002,
+      "packets": 2,
+      "bytes": 288
+    },
+    "server": {
+      "ip": "203.0.113.10",
+      "port": 443,
+      "packets": 1,
+      "bytes": 54
+    },
+    "source": {
+      "ip": "10.20.4.60",
+      "port": 51002,
+      "packets": 2,
+      "bytes": 288
+    },
+    "destination": {
+      "ip": "203.0.113.10",
+      "port": 443,
+      "packets": 1,
+      "bytes": 54
+    },
+    "network": {
+      "transport": "tcp",
+      "protocol": "https",
+      "packets": 3,
+      "bytes": 342,
+      "direction": "unknown"
+    }
+  },
+  {
+    "@timestamp": "2025-08-10T10:00:00.300000Z",
+    "ecs": {
+      "version": "8.11.0"
+    },
+    "event": {
+      "kind": "event",
+      "category": [
+        "network"
+      ],
+      "type": [
+        "connection"
+      ],
+      "action": "network_flow",
+      "module": "network_flow",
+      "dataset": "network_flow.flow",
+      "duration": 19999980
+    },
+    "observer": {
+      "hostname": "sensor-host",
+      "type": "sensor",
+      "product": "scapy-ecs-sensor",
+      "vendor": "portfolio"
+    },
+    "client": {
+      "ip": "10.20.4.60",
+      "port": 51003,
+      "packets": 2,
+      "bytes": 288
+    },
+    "server": {
+      "ip": "203.0.113.10",
+      "port": 443,
+      "packets": 1,
+      "bytes": 54
+    },
+    "source": {
+      "ip": "10.20.4.60",
+      "port": 51003,
+      "packets": 2,
+      "bytes": 288
+    },
+    "destination": {
+      "ip": "203.0.113.10",
+      "port": 443,
+      "packets": 1,
+      "bytes": 54
+    },
+    "network": {
+      "transport": "tcp",
+      "protocol": "https",
+      "packets": 3,
+      "bytes": 342,
+      "direction": "unknown"
+    }
+  },
+  {
+    "@timestamp": "2025-08-10T10:00:00.400000Z",
+    "ecs": {
+      "version": "8.11.0"
+    },
+    "event": {
+      "kind": "event",
+      "category": [
+        "network"
+      ],
+      "type": [
+        "connection"
+      ],
+      "action": "network_flow",
+      "module": "network_flow",
+      "dataset": "network_flow.flow",
+      "duration": 19999980
+    },
+    "observer": {
+      "hostname": "sensor-host",
+      "type": "sensor",
+      "product": "scapy-ecs-sensor",
+      "vendor": "portfolio"
+    },
+    "client": {
+      "ip": "10.20.4.60",
+      "port": 51004,
+      "packets": 2,
+      "bytes": 288
+    },
+    "server": {
+      "ip": "203.0.113.10",
+      "port": 443,
+      "packets": 1,
+      "bytes": 54
+    },
+    "source": {
+      "ip": "10.20.4.60",
+      "port": 51004,
+      "packets": 2,
+      "bytes": 288
+    },
+    "destination": {
+      "ip": "203.0.113.10",
+      "port": 443,
+      "packets": 1,
+      "bytes": 54
+    },
+    "network": {
+      "transport": "tcp",
+      "protocol": "https",
+      "packets": 3,
+      "bytes": 342,
+      "direction": "unknown"
+    }
+  },
+  {
+    "@timestamp": "2025-08-10T10:00:00.500000Z",
+    "ecs": {
+      "version": "8.11.0"
+    },
+    "event": {
+      "kind": "event",
+      "category": [
+        "network"
+      ],
+      "type": [
+        "connection"
+      ],
+      "action": "network_flow",
+      "module": "network_flow",
+      "dataset": "network_flow.flow",
+      "duration": 19999980
+    },
+    "observer": {
+      "hostname": "sensor-host",
+      "type": "sensor",
+      "product": "scapy-ecs-sensor",
+      "vendor": "portfolio"
+    },
+    "client": {
+      "ip": "10.20.4.60",
+      "port": 51005,
+      "packets": 2,
+      "bytes": 288
+    },
+    "server": {
+      "ip": "203.0.113.10",
+      "port": 443,
+      "packets": 1,
+      "bytes": 54
+    },
+    "source": {
+      "ip": "10.20.4.60",
+      "port": 51005,
+      "packets": 2,
+      "bytes": 288
+    },
+    "destination": {
+      "ip": "203.0.113.10",
+      "port": 443,
+      "packets": 1,
+      "bytes": 54
+    },
+    "network": {
+      "transport": "tcp",
+      "protocol": "https",
+      "packets": 3,
+      "bytes": 342,
+      "direction": "unknown"
+    }
+  },
+  {
+    "@timestamp": "2025-08-10T10:00:00.600000Z",
+    "ecs": {
+      "version": "8.11.0"
+    },
+    "event": {
+      "kind": "event",
+      "category": [
+        "network"
+      ],
+      "type": [
+        "connection"
+      ],
+      "action": "network_flow",
+      "module": "network_flow",
+      "dataset": "network_flow.flow",
+      "duration": 19999980
+    },
+    "observer": {
+      "hostname": "sensor-host",
+      "type": "sensor",
+      "product": "scapy-ecs-sensor",
+      "vendor": "portfolio"
+    },
+    "client": {
+      "ip": "10.20.4.60",
+      "port": 51006,
+      "packets": 2,
+      "bytes": 288
+    },
+    "server": {
+      "ip": "203.0.113.10",
+      "port": 443,
+      "packets": 1,
+      "bytes": 54
+    },
+    "source": {
+      "ip": "10.20.4.60",
+      "port": 51006,
+      "packets": 2,
+      "bytes": 288
+    },
+    "destination": {
+      "ip": "203.0.113.10",
+      "port": 443,
+      "packets": 1,
+      "bytes": 54
+    },
+    "network": {
+      "transport": "tcp",
+      "protocol": "https",
+      "packets": 3,
+      "bytes": 342,
+      "direction": "unknown"
+    }
+  },
+  {
+    "@timestamp": "2025-08-10T10:00:00.700000Z",
+    "ecs": {
+      "version": "8.11.0"
+    },
+    "event": {
+      "kind": "event",
+      "category": [
+        "network"
+      ],
+      "type": [
+        "connection"
+      ],
+      "action": "network_flow",
+      "module": "network_flow",
+      "dataset": "network_flow.flow",
+      "duration": 19999980
+    },
+    "observer": {
+      "hostname": "sensor-host",
+      "type": "sensor",
+      "product": "scapy-ecs-sensor",
+      "vendor": "portfolio"
+    },
+    "client": {
+      "ip": "10.20.4.60",
+      "port": 51007,
+      "packets": 2,
+      "bytes": 288
+    },
+    "server": {
+      "ip": "203.0.113.10",
+      "port": 443,
+      "packets": 1,
+      "bytes": 54
+    },
+    "source": {
+      "ip": "10.20.4.60",
+      "port": 51007,
+      "packets": 2,
+      "bytes": 288
+    },
+    "destination": {
+      "ip": "203.0.113.10",
+      "port": 443,
+      "packets": 1,
+      "bytes": 54
+    },
+    "network": {
+      "transport": "tcp",
+      "protocol": "https",
+      "packets": 3,
+      "bytes": 342,
+      "direction": "unknown"
+    }
+  },
+  {
+    "@timestamp": "2025-08-10T10:00:00.800000Z",
+    "ecs": {
+      "version": "8.11.0"
+    },
+    "event": {
+      "kind": "event",
+      "category": [
+        "network"
+      ],
+      "type": [
+        "connection"
+      ],
+      "action": "network_flow",
+      "module": "network_flow",
+      "dataset": "network_flow.flow",
+      "duration": 19999980
+    },
+    "observer": {
+      "hostname": "sensor-host",
+      "type": "sensor",
+      "product": "scapy-ecs-sensor",
+      "vendor": "portfolio"
+    },
+    "client": {
+      "ip": "10.20.4.60",
+      "port": 51008,
+      "packets": 2,
+      "bytes": 288
+    },
+    "server": {
+      "ip": "203.0.113.10",
+      "port": 443,
+      "packets": 1,
+      "bytes": 54
+    },
+    "source": {
+      "ip": "10.20.4.60",
+      "port": 51008,
+      "packets": 2,
+      "bytes": 288
+    },
+    "destination": {
+      "ip": "203.0.113.10",
+      "port": 443,
+      "packets": 1,
+      "bytes": 54
+    },
+    "network": {
+      "transport": "tcp",
+      "protocol": "https",
+      "packets": 3,
+      "bytes": 342,
+      "direction": "unknown"
+    }
+  },
+  {
+    "@timestamp": "2025-08-10T10:00:00.900000Z",
+    "ecs": {
+      "version": "8.11.0"
+    },
+    "event": {
+      "kind": "event",
+      "category": [
+        "network"
+      ],
+      "type": [
+        "connection"
+      ],
+      "action": "network_flow",
+      "module": "network_flow",
+      "dataset": "network_flow.flow",
+      "duration": 19999980
+    },
+    "observer": {
+      "hostname": "sensor-host",
+      "type": "sensor",
+      "product": "scapy-ecs-sensor",
+      "vendor": "portfolio"
+    },
+    "client": {
+      "ip": "10.20.4.60",
+      "port": 51009,
+      "packets": 2,
+      "bytes": 288
+    },
+    "server": {
+      "ip": "203.0.113.10",
+      "port": 443,
+      "packets": 1,
+      "bytes": 54
+    },
+    "source": {
+      "ip": "10.20.4.60",
+      "port": 51009,
+      "packets": 2,
+      "bytes": 288
+    },
+    "destination": {
+      "ip": "203.0.113.10",
+      "port": 443,
+      "packets": 1,
+      "bytes": 54
+    },
+    "network": {
+      "transport": "tcp",
+      "protocol": "https",
+      "packets": 3,
+      "bytes": 342,
+      "direction": "unknown"
+    }
+  },
+  {
+    "@timestamp": "2025-08-10T10:00:01Z",
+    "ecs": {
+      "version": "8.11.0"
+    },
+    "event": {
+      "kind": "event",
+      "category": [
+        "network"
+      ],
+      "type": [
+        "connection"
+      ],
+      "action": "network_flow",
+      "module": "network_flow",
+      "dataset": "network_flow.flow",
+      "duration": 19999980
+    },
+    "observer": {
+      "hostname": "sensor-host",
+      "type": "sensor",
+      "product": "scapy-ecs-sensor",
+      "vendor": "portfolio"
+    },
+    "client": {
+      "ip": "10.20.4.60",
+      "port": 51010,
+      "packets": 2,
+      "bytes": 288
+    },
+    "server": {
+      "ip": "203.0.113.10",
+      "port": 443,
+      "packets": 1,
+      "bytes": 54
+    },
+    "source": {
+      "ip": "10.20.4.60",
+      "port": 51010,
+      "packets": 2,
+      "bytes": 288
+    },
+    "destination": {
+      "ip": "203.0.113.10",
+      "port": 443,
+      "packets": 1,
+      "bytes": 54
+    },
+    "network": {
+      "transport": "tcp",
+      "protocol": "https",
+      "packets": 3,
+      "bytes": 342,
+      "direction": "unknown"
+    }
+  },
+  {
+    "@timestamp": "2025-08-10T10:00:01.100000Z",
+    "ecs": {
+      "version": "8.11.0"
+    },
+    "event": {
+      "kind": "event",
+      "category": [
+        "network"
+      ],
+      "type": [
+        "connection"
+      ],
+      "action": "network_flow",
+      "module": "network_flow",
+      "dataset": "network_flow.flow",
+      "duration": 19999980
+    },
+    "observer": {
+      "hostname": "sensor-host",
+      "type": "sensor",
+      "product": "scapy-ecs-sensor",
+      "vendor": "portfolio"
+    },
+    "client": {
+      "ip": "10.20.4.60",
+      "port": 51011,
+      "packets": 2,
+      "bytes": 288
+    },
+    "server": {
+      "ip": "203.0.113.10",
+      "port": 443,
+      "packets": 1,
+      "bytes": 54
+    },
+    "source": {
+      "ip": "10.20.4.60",
+      "port": 51011,
+      "packets": 2,
+      "bytes": 288
+    },
+    "destination": {
+      "ip": "203.0.113.10",
+      "port": 443,
+      "packets": 1,
+      "bytes": 54
+    },
+    "network": {
+      "transport": "tcp",
+      "protocol": "https",
+      "packets": 3,
+      "bytes": 342,
+      "direction": "unknown"
+    }
+  },
+  {
+    "@timestamp": "2025-08-10T10:00:01.200000Z",
+    "ecs": {
+      "version": "8.11.0"
+    },
+    "event": {
+      "kind": "event",
+      "category": [
+        "network"
+      ],
+      "type": [
+        "connection"
+      ],
+      "action": "network_flow",
+      "module": "network_flow",
+      "dataset": "network_flow.flow",
+      "duration": 19999980
+    },
+    "observer": {
+      "hostname": "sensor-host",
+      "type": "sensor",
+      "product": "scapy-ecs-sensor",
+      "vendor": "portfolio"
+    },
+    "client": {
+      "ip": "10.20.4.60",
+      "port": 51012,
+      "packets": 2,
+      "bytes": 288
+    },
+    "server": {
+      "ip": "203.0.113.10",
+      "port": 443,
+      "packets": 1,
+      "bytes": 54
+    },
+    "source": {
+      "ip": "10.20.4.60",
+      "port": 51012,
+      "packets": 2,
+      "bytes": 288
+    },
+    "destination": {
+      "ip": "203.0.113.10",
+      "port": 443,
+      "packets": 1,
+      "bytes": 54
+    },
+    "network": {
+      "transport": "tcp",
+      "protocol": "https",
+      "packets": 3,
+      "bytes": 342,
+      "direction": "unknown"
+    }
+  },
+  {
+    "@timestamp": "2025-08-10T10:00:01.300000Z",
+    "ecs": {
+      "version": "8.11.0"
+    },
+    "event": {
+      "kind": "event",
+      "category": [
+        "network"
+      ],
+      "type": [
+        "connection"
+      ],
+      "action": "network_flow",
+      "module": "network_flow",
+      "dataset": "network_flow.flow",
+      "duration": 19999980
+    },
+    "observer": {
+      "hostname": "sensor-host",
+      "type": "sensor",
+      "product": "scapy-ecs-sensor",
+      "vendor": "portfolio"
+    },
+    "client": {
+      "ip": "10.20.4.60",
+      "port": 51013,
+      "packets": 2,
+      "bytes": 288
+    },
+    "server": {
+      "ip": "203.0.113.10",
+      "port": 443,
+      "packets": 1,
+      "bytes": 54
+    },
+    "source": {
+      "ip": "10.20.4.60",
+      "port": 51013,
+      "packets": 2,
+      "bytes": 288
+    },
+    "destination": {
+      "ip": "203.0.113.10",
+      "port": 443,
+      "packets": 1,
+      "bytes": 54
+    },
+    "network": {
+      "transport": "tcp",
+      "protocol": "https",
+      "packets": 3,
+      "bytes": 342,
+      "direction": "unknown"
+    }
+  },
+  {
+    "@timestamp": "2025-08-10T10:00:01.400000Z",
+    "ecs": {
+      "version": "8.11.0"
+    },
+    "event": {
+      "kind": "event",
+      "category": [
+        "network"
+      ],
+      "type": [
+        "connection"
+      ],
+      "action": "network_flow",
+      "module": "network_flow",
+      "dataset": "network_flow.flow",
+      "duration": 19999980
+    },
+    "observer": {
+      "hostname": "sensor-host",
+      "type": "sensor",
+      "product": "scapy-ecs-sensor",
+      "vendor": "portfolio"
+    },
+    "client": {
+      "ip": "10.20.4.60",
+      "port": 51014,
+      "packets": 2,
+      "bytes": 288
+    },
+    "server": {
+      "ip": "203.0.113.10",
+      "port": 443,
+      "packets": 1,
+      "bytes": 54
+    },
+    "source": {
+      "ip": "10.20.4.60",
+      "port": 51014,
+      "packets": 2,
+      "bytes": 288
+    },
+    "destination": {
+      "ip": "203.0.113.10",
+      "port": 443,
+      "packets": 1,
+      "bytes": 54
+    },
+    "network": {
+      "transport": "tcp",
+      "protocol": "https",
+      "packets": 3,
+      "bytes": 342,
+      "direction": "unknown"
     }
   }
 ]

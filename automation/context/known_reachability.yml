@@ -1,0 +1,8 @@
+# Declared baseline of identity -> host reachability. A hop whose target is NOT in
+# the identity's known set is NEW_EDGE (first observed relative to baseline, not
+# merely first-seen this run). Feeds target_novelty.
+known_edges:
+  "CORP\\alice":      [WS-ENG-12, WS-FIN-07]
+  "CORP\\bob":        [WS-ENG-12, SRV-APP-01]
+  "CORP\\dom_admin":  [WS-ENG-12, JUMP-PAW01, DC01, PKI01, SRV-APP-01, SRV-FILE-02]
+  "CORP\\svc-backup": [SRV-APP-01, SRV-FILE-02]

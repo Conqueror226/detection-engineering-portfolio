@@ -28,6 +28,10 @@ attack:
     tactic_id: TA0008
     technique: "Remote Services: Remote Desktop Protocol"
     technique_id: T1021.001
+  - tactic: Lateral Movement
+    tactic_id: TA0008
+    technique: "Remote Services: SMB/Windows Admin Shares"
+    technique_id: T1021.002
 
 false_positives:
   - Administrators using RDP/SMB then running tools on the target.

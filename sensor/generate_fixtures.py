@@ -71,11 +71,26 @@ def benign():
     return pkts
 
 
+def https_fanout():
+    """15 separate HTTPS connections from one client to ONE server (all server
+    port 443). Many connections to a single service is NOT a port scan: distinct
+    server ports = 1, so T1046 must not fire. Ephemeral client ports and the
+    reverse direction must not inflate the distinct-destination-port count."""
+    pkts = []
+    for i in range(15):
+        sport = 51000 + i
+        pkts.append(_pkt(TARGET, "203.0.113.10", sport, 443, BASE_T + i * 0.1, flags="S"))
+        pkts.append(_pkt("203.0.113.10", TARGET, 443, sport, BASE_T + i * 0.1 + 0.01, flags="SA"))
+        pkts.append(_pkt(TARGET, "203.0.113.10", sport, 443, BASE_T + i * 0.1 + 0.02, flags="PA", size=180))
+    return pkts
+
+
 def main() -> int:
     FIXTURES.mkdir(parents=True, exist_ok=True)
     for name, builder in (("lateral_movement", lateral_movement),
                           ("port_scan", port_scan),
-                          ("benign", benign)):
+                          ("benign", benign),
+                          ("https_fanout", https_fanout)):
         out = FIXTURES / f"{name}.pcap"
         wrpcap(str(out), builder())
         print(f"wrote {out.relative_to(FIXTURES.parent.parent)}")

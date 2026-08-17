@@ -27,6 +27,12 @@ tags = [
   "Tactic: Discovery",
 ]
 
+false_positives = [
+  "Authorised vulnerability scanners (e.g. Nessus, OpenVAS).",
+  "Asset-management and monitoring tools that probe many ports.",
+  "Load balancers or health-checkers touching many service ports.",
+]
+
 query = '''
 FROM logs-network.* METADATA _id, _version, _index
 | WHERE event.category == "network" AND network.transport == "tcp"
@@ -47,10 +53,3 @@ framework = "MITRE ATT&CK"
   id = "T1046"
   name = "Network Service Discovery"
   reference = "https://attack.mitre.org/techniques/T1046/"
-
-[rule.false_positives]
-notes = [
-  "Authorised vulnerability scanners (e.g. Nessus, OpenVAS).",
-  "Asset-management and monitoring tools that probe many ports.",
-  "Load balancers or health-checkers touching many service ports.",
-]

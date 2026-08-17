@@ -1,0 +1,94 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ProgressionFinding",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "label",
+    "confidence",
+    "path",
+    "identity",
+    "edges",
+    "rationale"
+  ],
+  "properties": {
+    "label": {
+      "type": "string",
+      "enum": [
+        "NONE",
+        "INSUFFICIENT_EVIDENCE",
+        "INSUFFICIENT_CONTEXT",
+        "EXPECTED",
+        "JUSTIFIED",
+        "PIVOT_PROGRESSION",
+        "PRIVILEGED_DESTINATION_REACH",
+        "POSSIBLE_PRIVILEGED_PROGRESSION",
+        "PRIVILEGED_PROGRESSION",
+        "CREDENTIAL_TRANSITION_PROGRESSION",
+        "CRITICAL_UNAPPROVED_PATH"
+      ]
+    },
+    "confidence": {
+      "type": "string",
+      "enum": [
+        "none",
+        "low",
+        "medium",
+        "high",
+        "highest"
+      ]
+    },
+    "path": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    },
+    "identity": {
+      "type": "string",
+      "minLength": 1
+    },
+    "edges": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "rationale": {
+      "type": "string",
+      "minLength": 1
+    },
+    "modifiers": {
+      "type": "object"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "label": {
+            "enum": [
+              "PIVOT_PROGRESSION",
+              "POSSIBLE_PRIVILEGED_PROGRESSION",
+              "PRIVILEGED_PROGRESSION",
+              "PRIVILEGED_DESTINATION_REACH",
+              "CREDENTIAL_TRANSITION_PROGRESSION",
+              "CRITICAL_UNAPPROVED_PATH"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "path": {
+            "minItems": 3
+          },
+          "edges": {
+            "minItems": 2
+          }
+        }
+      }
+    }
+  ]
+}

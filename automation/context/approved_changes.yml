@@ -1,0 +1,13 @@
+# Approved NEW access. Honours approved_from..approved_until and optional
+# via/service scope. Outside the window or scope, the change does NOT justify.
+approved_changes:
+  - identity: "CORP\\bob"
+    target_host: SRV-FILE-02
+    approved_from: "2026-06-01"
+    approved_until: "2026-12-31"
+    ticket: CHG-4471
+  - identity: "CORP\\alice"          # expired -> must not justify a 2026 event
+    target_host: SRV-APP-01
+    approved_from: "2019-01-01"
+    approved_until: "2020-01-01"
+    ticket: CHG-0009

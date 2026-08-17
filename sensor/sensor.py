@@ -1,22 +1,15 @@
 #!/usr/bin/env python3
-"""ECS network telemetry sensor.
+"""ECS network telemetry sensor (bidirectional flows).
 
-Captures (or replays) packets with Scapy, aggregates them into flows, and emits
-Elastic Common Schema (ECS) network events as NDJSON — one event per flow. The
-sensor is a *telemetry producer only*: it does not decide what is malicious.
-Correlation and detection live in the detection rules under ../detections, which
-join these network events with Windows authentication and process events.
+Captures or replays packets, folds both directions of a conversation into one
+canonical flow (client = the SYN initiator; server = the listener), and emits ECS
+network events as NDJSON. Client/server orientation means an ephemeral return
+flow can never masquerade as a new connection to a high port — which is what kept
+T1046 honest. Sensor identity lives under `observer.*`, not `host.*`.
 
 Modes:
-  --pcap FILE     replay a capture file (no privileges needed; used in CI/tests)
-  --iface IFACE   live capture (requires root/Administrator for raw sockets)
-
-Output:
-  --out FILE      write NDJSON here (default: stdout)
-
-Example:
-  python sensor/sensor.py --pcap sensor/fixtures/lateral_movement.pcap
-  sudo python sensor/sensor.py --iface eth0 --out network.ndjson
+  --pcap FILE     replay a capture (no privileges; used in CI/tests)
+  --iface IFACE   live capture via AsyncSniffer with periodic flow flushing
 """
 from __future__ import annotations
 
@@ -24,128 +17,185 @@ import argparse
 import json
 import logging
 import sys
+import threading
+import time
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 
 logging.getLogger("scapy").setLevel(logging.ERROR)
-from scapy.all import IP, TCP, UDP, rdpcap, sniff  # noqa: E402
+from scapy.all import IP, TCP, UDP, AsyncSniffer, rdpcap  # noqa: E402
 
-# Minimal, extensible port -> application protocol map (best-effort labelling).
+ECS_VERSION = "8.11.0"
 PORT_PROTO = {
-    3389: "rdp", 445: "smb", 139: "netbios-ssn", 88: "kerberos",
-    53: "dns", 80: "http", 443: "https", 389: "ldap", 636: "ldaps",
-    135: "msrpc", 5985: "winrm", 5986: "winrm",
+    3389: "rdp", 445: "smb", 139: "netbios-ssn", 88: "kerberos", 53: "dns",
+    80: "http", 443: "https", 389: "ldap", 636: "ldaps", 135: "msrpc",
+    5985: "winrm", 5986: "winrm",
 }
+
+
+def _canonical(ip_a, pa, ip_b, pb, transport):
+    """Direction-independent flow key."""
+    return tuple(sorted([(ip_a, pa), (ip_b, pb)])) + (transport,)
 
 
 @dataclass
 class Flow:
-    src_ip: str
-    dst_ip: str
+    ep1: tuple            # (ip, port)
+    ep2: tuple
     transport: str
-    dst_port: int
-    src_port: int
     first: float
     last: float
-    packets: int = 0
-    bytes: int = 0
-    flags: set = field(default_factory=set)
+    # orientation
+    client: tuple | None = None   # (ip, port) of SYN initiator
+    server: tuple | None = None
+    # directional counters keyed by source endpoint
+    pkts: dict = field(default_factory=dict)
+    bytez: dict = field(default_factory=dict)
+    saw_syn: bool = False
 
-    def key(self):
-        return (self.src_ip, self.dst_ip, self.transport, self.dst_port)
+    def add(self, src_ep, dst_ep, size, t, flags):
+        self.first = min(self.first, t); self.last = max(self.last, t)
+        self.pkts[src_ep] = self.pkts.get(src_ep, 0) + 1
+        self.bytez[src_ep] = self.bytez.get(src_ep, 0) + size
+        if flags is not None and not self.saw_syn:
+            s = "S" in flags and "A" not in flags
+            sa = "S" in flags and "A" in flags
+            if s:
+                self.client, self.server, self.saw_syn = src_ep, dst_ep, True
+            elif sa:
+                self.client, self.server, self.saw_syn = dst_ep, src_ep, True
+        if self.client is None:            # fallback: first-seen src is client
+            self.client, self.server = src_ep, dst_ep
 
 
-def _flow_key(pkt):
+def _parse(pkt):
     if IP not in pkt:
         return None
     ip = pkt[IP]
     if TCP in pkt:
-        l4, transport = pkt[TCP], "tcp"
+        l4, transport, flags = pkt[TCP], "tcp", str(pkt[TCP].flags)
     elif UDP in pkt:
-        l4, transport = pkt[UDP], "udp"
+        l4, transport, flags = pkt[UDP], "udp", None
     else:
         return None
-    return (ip.src, ip.dst, transport, int(l4.dport), int(l4.sport), l4)
+    return (ip.src, int(l4.sport)), (ip.dst, int(l4.dport)), transport, flags, len(bytes(pkt)), \
+        float(getattr(pkt, "time", 0.0))
 
 
 def aggregate(packets) -> list[Flow]:
-    """Collapse packets into flows keyed by (src, dst, transport, dst_port)."""
     flows: dict[tuple, Flow] = {}
     for pkt in packets:
-        parsed = _flow_key(pkt)
-        if parsed is None:
+        p = _parse(pkt)
+        if p is None:
             continue
-        src, dst, transport, dport, sport, l4 = parsed
-        t = float(getattr(pkt, "time", 0.0))
-        k = (src, dst, transport, dport)
+        src_ep, dst_ep, transport, flags, size, t = p
+        k = _canonical(*src_ep, *dst_ep, transport)
         f = flows.get(k)
         if f is None:
-            f = Flow(src, dst, transport, dport, sport, first=t, last=t)
+            f = Flow(ep1=src_ep, ep2=dst_ep, transport=transport, first=t, last=t)
             flows[k] = f
-        f.packets += 1
-        f.bytes += len(bytes(pkt))
-        f.first = min(f.first, t)
-        f.last = max(f.last, t)
-        if transport == "tcp":
-            f.flags.update(str(l4.flags))
+        f.add(src_ep, dst_ep, size, t, flags)
     return list(flows.values())
 
 
-def to_ecs(flow: Flow, host_name: str) -> dict:
-    """Render a Flow as an ECS network event (dict, ready for JSON serialisation)."""
-    from datetime import datetime, timezone
+def to_ecs(flow: Flow, observer_hostname: str) -> dict:
+    client, server = flow.client, flow.server
     ts = datetime.fromtimestamp(flow.first, tz=timezone.utc).isoformat().replace("+00:00", "Z")
+    c_pkts, c_bytes = flow.pkts.get(client, 0), flow.bytez.get(client, 0)
+    s_pkts, s_bytes = flow.pkts.get(server, 0), flow.bytez.get(server, 0)
     return {
         "@timestamp": ts,
+        "ecs": {"version": ECS_VERSION},
         "event": {
-            "category": ["network"],
-            "type": ["connection"],
-            "action": "network_flow",
-            "duration": int(max(0.0, flow.last - flow.first) * 1_000_000_000),  # ns
+            "kind": "event", "category": ["network"], "type": ["connection"],
+            "action": "network_flow", "module": "network_flow", "dataset": "network_flow.flow",
+            "duration": int(max(0.0, flow.last - flow.first) * 1_000_000_000),
         },
-        "source": {"ip": flow.src_ip, "port": flow.src_port},
-        "destination": {"ip": flow.dst_ip, "port": flow.dst_port},
+        "observer": {"hostname": observer_hostname, "type": "sensor",
+                     "product": "scapy-ecs-sensor", "vendor": "portfolio"},
+        "client": {"ip": client[0], "port": client[1], "packets": c_pkts, "bytes": c_bytes},
+        "server": {"ip": server[0], "port": server[1], "packets": s_pkts, "bytes": s_bytes},
+        # source = client, destination = server (orientation-stable for consumers)
+        "source": {"ip": client[0], "port": client[1], "packets": c_pkts, "bytes": c_bytes},
+        "destination": {"ip": server[0], "port": server[1], "packets": s_pkts, "bytes": s_bytes},
         "network": {
-            "transport": flow.transport,
-            "protocol": PORT_PROTO.get(flow.dst_port),
-            "packets": flow.packets,
-            "bytes": flow.bytes,
+            "transport": flow.transport, "protocol": PORT_PROTO.get(server[1]),
+            "packets": c_pkts + s_pkts, "bytes": c_bytes + s_bytes,
+            "direction": "unknown",
         },
-        "host": {"name": host_name},
-        "observer": {"type": "scapy-ecs-sensor"},
     }
 
 
-def run(packets, host_name: str, out) -> int:
+def run(packets, observer_hostname: str, out) -> int:
     flows = aggregate(packets)
-    # Deterministic ordering: by start time, then destination port.
-    flows.sort(key=lambda f: (f.first, f.dst_port))
+    flows.sort(key=lambda f: (f.first, (f.server or f.ep2)[1]))
     for flow in flows:
-        out.write(json.dumps(to_ecs(flow, host_name)) + "\n")
+        out.write(json.dumps(to_ecs(flow, observer_hostname)) + "\n")
     return len(flows)
+
+
+def live_sniff(iface: str, observer_hostname: str, out, flush_interval: int = 30,
+               idle_timeout: int = 60, stop_after: float | None = None) -> None:
+    """Real-time capture: AsyncSniffer feeds a shared flow table; a timer thread
+    periodically flushes flows idle beyond `idle_timeout` so events stream out
+    instead of only appearing at capture end."""
+    flows: dict[tuple, Flow] = {}
+    lock = threading.Lock()
+
+    def _on(pkt):
+        p = _parse(pkt)
+        if p is None:
+            return
+        src_ep, dst_ep, transport, flags, size, t = p
+        k = _canonical(*src_ep, *dst_ep, transport)
+        with lock:
+            f = flows.get(k) or Flow(ep1=src_ep, ep2=dst_ep, transport=transport, first=t, last=t)
+            flows[k] = f
+            f.add(src_ep, dst_ep, size, t, flags)
+
+    def _flush(final=False):
+        now = time.time()
+        with lock:
+            due = [k for k, f in flows.items() if final or (now - f.last) >= idle_timeout]
+            for k in due:
+                out.write(json.dumps(to_ecs(flows.pop(k), observer_hostname)) + "\n")
+            out.flush()
+
+    sniffer = AsyncSniffer(iface=iface, store=False, prn=_on)
+    sniffer.start()
+    start = time.time()
+    try:
+        while True:
+            time.sleep(flush_interval)
+            _flush()
+            if stop_after and (time.time() - start) >= stop_after:
+                break
+    except KeyboardInterrupt:
+        pass
+    finally:
+        sniffer.stop()
+        _flush(final=True)
 
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description="ECS network telemetry sensor")
     src = ap.add_mutually_exclusive_group(required=True)
-    src.add_argument("--pcap", help="replay a capture file (no privileges needed)")
-    src.add_argument("--iface", help="live capture interface (requires root)")
-    ap.add_argument("--out", help="output NDJSON file (default: stdout)")
-    ap.add_argument("--host-name", default="sensor-host", help="host.name to stamp on events")
-    ap.add_argument("--count", type=int, default=0, help="live mode: stop after N packets (0 = until Ctrl-C)")
+    src.add_argument("--pcap")
+    src.add_argument("--iface")
+    ap.add_argument("--out")
+    ap.add_argument("--observer-hostname", default="sensor-host")
+    ap.add_argument("--flush-interval", type=int, default=30)
     args = ap.parse_args(argv)
-
-    if args.pcap:
-        packets = rdpcap(args.pcap)
-    else:
-        packets = sniff(iface=args.iface, count=args.count or 0)
-
     out = open(args.out, "w", encoding="utf-8") if args.out else sys.stdout
     try:
-        n = run(packets, args.host_name, out)
+        if args.pcap:
+            n = run(rdpcap(args.pcap), args.observer_hostname, out)
+            print(f"emitted {n} ECS network event(s)", file=sys.stderr)
+        else:
+            live_sniff(args.iface, args.observer_hostname, out, args.flush_interval)
     finally:
         if args.out:
             out.close()
-    print(f"emitted {n} ECS network event(s)", file=sys.stderr)
     return 0
 
 

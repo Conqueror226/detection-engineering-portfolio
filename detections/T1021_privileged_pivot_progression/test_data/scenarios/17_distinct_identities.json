@@ -1,0 +1,74 @@
+[
+  {
+    "edge_id": "e0032",
+    "@timestamp": "2026-08-10T10:00:00Z",
+    "source_host": "WS-ENG-12",
+    "target_host": "WS-FIN-07",
+    "identity": "CORP\\alice",
+    "effective_identity": "CORP\\alice",
+    "service": "rdp",
+    "logon_id": "0xe0032",
+    "privilege_state": "absent",
+    "auth_state": "confirmed",
+    "credential_transition": null,
+    "evidence_refs": {
+      "network": "net-e0032",
+      "logon": "log-e0032",
+      "privilege": null
+    }
+  },
+  {
+    "edge_id": "e0033",
+    "@timestamp": "2026-08-10T10:03:00Z",
+    "source_host": "WS-FIN-07",
+    "target_host": "SRV-APP-01",
+    "identity": "CORP\\alice",
+    "effective_identity": "CORP\\alice",
+    "service": "rdp",
+    "logon_id": "0xe0033",
+    "privilege_state": "absent",
+    "auth_state": "confirmed",
+    "credential_transition": null,
+    "evidence_refs": {
+      "network": "net-e0033",
+      "logon": "log-e0033",
+      "privilege": null
+    }
+  },
+  {
+    "edge_id": "e0034",
+    "@timestamp": "2026-08-10T10:00:10Z",
+    "source_host": "WS-ENG-12",
+    "target_host": "WS-FIN-07",
+    "identity": "CORP\\bob",
+    "effective_identity": "CORP\\bob",
+    "service": "rdp",
+    "logon_id": "0xe0034",
+    "privilege_state": "absent",
+    "auth_state": "confirmed",
+    "credential_transition": null,
+    "evidence_refs": {
+      "network": "net-e0034",
+      "logon": "log-e0034",
+      "privilege": null
+    }
+  },
+  {
+    "edge_id": "e0035",
+    "@timestamp": "2026-08-10T10:03:10Z",
+    "source_host": "WS-FIN-07",
+    "target_host": "SRV-APP-01",
+    "identity": "CORP\\bob",
+    "effective_identity": "CORP\\bob",
+    "service": "rdp",
+    "logon_id": "0xe0035",
+    "privilege_state": "absent",
+    "auth_state": "confirmed",
+    "credential_transition": null,
+    "evidence_refs": {
+      "network": "net-e0035",
+      "logon": "log-e0035",
+      "privilege": null
+    }
+  }
+]

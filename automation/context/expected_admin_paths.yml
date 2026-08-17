@@ -1,0 +1,6 @@
+# Sanctioned administrative paths. A Tier-0 reach is EXPECTED only when it matches
+# one of these (right identity, through the right jump host, to the right tier).
+approved_paths:
+  - identity: "CORP\\dom_admin"
+    via: JUMP-PAW01          # must transit the privileged access workstation
+    to_tier: 0

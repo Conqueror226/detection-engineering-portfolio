@@ -1,0 +1,8 @@
+[
+  { "@timestamp": "2026-08-10T11:00:00Z", "event": { "category": ["network"], "type": ["connection"] },
+    "network": { "transport": "tcp", "protocol": "rdp" }, "destination": { "ip": "10.20.4.60", "port": 3389 }, "source": { "ip": "10.20.4.51" },
+    "_comment": "RDP flow to target ..." },
+  { "@timestamp": "2026-08-10T11:00:05Z", "event": { "category": "authentication", "code": "4624", "outcome": "success" },
+    "host": { "ip": "10.20.4.60", "name": "SRV-APP-01" }, "winlog": { "event_data": { "LogonType": "10", "TargetUserName": "CORP\\alice" } },
+    "_comment": "... and a successful logon, but NO 4672 -> non-privileged session, edge does not fire." }
+]

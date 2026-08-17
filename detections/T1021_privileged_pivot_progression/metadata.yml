@@ -1,0 +1,59 @@
+id: T1021_privileged_pivot_progression
+name: "Privileged Pivot Edge (network + logon + special privileges)"
+category: signature
+status: development
+author: Désiré Abdoul Kader Bonzi
+created: 2026-08-10
+
+description: >
+  Establishes a privileged pivot edge (network RDP/SMB + successful 4624 + 4672
+  special privileges on the target). Edge establishment only; the multi-hop
+  progression that exposes administrative blind spots is reconstructed by the
+  Python progression layer from these edges plus tier/role context.
+
+query_language: eql
+query_file: query.eql
+rule_file: rule.toml
+
+platforms:
+  - windows
+  - network
+
+data_sources:
+  - Scapy ECS network sensor (event.category "network")
+  - Windows Security Event Log (4624 logon, 4672 special privileges)
+
+attack:
+  - tactic: Lateral Movement
+    tactic_id: TA0008
+    technique: "Remote Services: Remote Desktop Protocol"
+    technique_id: T1021.001
+  - tactic: Lateral Movement
+    tactic_id: TA0008
+    technique: "Remote Services: SMB/Windows Admin Shares"
+    technique_id: T1021.002
+
+related_techniques:
+  - technique_id: T1078.002
+    relationship: "Valid domain credentials may enable the remote-service pivots (related evidence, not formal coverage)."
+
+false_positives:
+  - Administrators legitimately establishing privileged sessions on servers.
+  - Automation/service accounts that hold privileges by design.
+  - Jump hosts / bastions where privileged remote sessions are expected.
+
+references:
+  - https://attack.mitre.org/techniques/T1021/
+  - https://attack.mitre.org/techniques/T1078/
+  - https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4672
+
+# The progression analytic (Python) that consumes these edges:
+progression:
+  graph_builder: ../../automation/build_reachability_graph.py
+  classifier: ../../automation/classify_pivot_progression.py
+  context_dir: ../../automation/context/
+  scenarios: test_data/scenarios/
+
+validation:
+  true_positive: test_data/true_positive.json
+  false_positive: test_data/false_positive.json

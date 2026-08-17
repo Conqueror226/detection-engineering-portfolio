@@ -6,6 +6,11 @@
 
 ---
 
+> **Role:** this is *edge establishment* — it confirms a pivot occurred. Multi-hop
+> progression and the administrative blind spot are handled by the privileged pivot
+> progression unit (`../T1021_privileged_pivot_progression`), which chains edges
+> across hosts with tier/role context.
+
 ## Hypothesis
 
 Lateral movement leaves a trail across three layers, and the fidelity is in their

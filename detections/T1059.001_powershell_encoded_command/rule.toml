@@ -28,6 +28,12 @@ tags = [
   "Tactic: Execution",
 ]
 
+false_positives = [
+  "Administrative scripts or software deployment tools that legitimately encode commands.",
+  "Management frameworks (e.g. SCCM, some EDRs) that invoke encoded PowerShell.",
+  "Developers or power users testing encoded payloads in a lab.",
+]
+
 query = '''
 FROM logs-windows.*, winlogbeat-*, logs-system.* METADATA _id, _version, _index
 | WHERE event.category == "process" AND event.type == "start"
@@ -55,10 +61,3 @@ framework = "MITRE ATT&CK"
     id = "T1059.001"
     name = "PowerShell"
     reference = "https://attack.mitre.org/techniques/T1059/001/"
-
-[rule.false_positives]
-notes = [
-  "Administrative scripts or software deployment tools that legitimately encode commands.",
-  "Management frameworks (e.g. SCCM, some EDRs) that invoke encoded PowerShell.",
-  "Developers or power users testing encoded payloads in a lab.",
-]

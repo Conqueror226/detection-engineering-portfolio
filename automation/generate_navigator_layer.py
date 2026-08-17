@@ -43,7 +43,7 @@ def main() -> int:
 
     layer = {
         "name": "Detection Portfolio Coverage",
-        "versions": {"attack": "15", "navigator": "5.0.0", "layer": "4.5"},
+        "versions": {"attack": "19.2", "navigator": "5.0.0", "layer": "4.5"},
         "domain": "enterprise-attack",
         "description": "Techniques covered by this detection engineering portfolio.",
         "techniques": techniques,

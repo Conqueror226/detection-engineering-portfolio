@@ -25,6 +25,14 @@ jobs:
       - name: Install dependencies
         run: python -m pip install -r requirements.txt
 
+      - name: Validate contracts and context (PR1 gates)
+        run: |
+          python automation/validate_schemas.py
+          python automation/validate_context.py
+          python automation/test_edge_contract.py
+          python automation/test_edge_materialization.py
+          python automation/test_pipeline.py
+
       - name: Validate all detection rules
         run: python automation/validate_rules.py
 
@@ -33,6 +41,9 @@ jobs:
 
       - name: Test ECS sensor against fixtures
         run: python automation/test_sensor.py
+
+      - name: Test pivot-progression classifier
+        run: python automation/test_progression.py
 
       - name: Generate coverage artifacts
         run: |
