@@ -25,6 +25,9 @@ jobs:
       - name: Install dependencies
         run: python -m pip install -r requirements.txt
 
+      - name: Generate deterministic pipeline PCAP
+        run: python fixtures/pipeline/generate.py
+
       - name: Validate contracts and context (PR1 gates)
         run: |
           python automation/validate_schemas.py

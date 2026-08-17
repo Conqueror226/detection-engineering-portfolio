@@ -1,14 +1,17 @@
 #!/usr/bin/env python3
 """Generate the pipeline pcap: two RDP hops WS->SRV-APP-01->DC01."""
-import logging, pathlib
+import logging, pathlib, sys
 logging.getLogger("scapy").setLevel(logging.ERROR)
+ROOT = pathlib.Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "sensor"))
+import sensor as _sensor_compat  # noqa: F401,E402 - configures offline-safe Scapy import
 from scapy.all import IP, TCP, Ether, wrpcap
 OUT = pathlib.Path(__file__).resolve().parent / "privileged_unapproved_path.pcap"
 BASE = 1786356000.0
 def flow(src, dst, sport, t):
     pk=[]
     for k,(s,d,sp,dp,fl) in enumerate([(src,dst,sport,3389,"S"),(dst,src,3389,sport,"SA"),(src,dst,sport,3389,"PA")]):
-        p=Ether()/IP(src=s,dst=d)/TCP(sport=sp,dport=dp,flags=fl); p.time=t+k*0.01; pk.append(p)
+        p=Ether(src="02:00:00:00:00:01", dst="02:00:00:00:00:02")/IP(src=s,dst=d)/TCP(sport=sp,dport=dp,flags=fl); p.time=t+k*0.01; pk.append(p)
     return pk
 pk = flow("10.0.0.10","10.0.0.60",49711,BASE) + flow("10.0.0.60","10.0.0.90",49712,BASE+60)
 wrpcap(str(OUT), pk); print("wrote", OUT.name)
