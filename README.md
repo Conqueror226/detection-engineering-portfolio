@@ -1,5 +1,8 @@
 # Detection Engineering Portfolio
 
+**Detection-as-Code and evidence-based hybrid lateral-movement reconstruction
+across Windows and AWS environments.**
+
 A Detections-as-Code portfolio built on the Elastic Stack. Each detection is a
 self-contained, version-controlled unit that pairs the query logic with its
 hypothesis, MITRE ATT&CK mapping, and validation data. On every push, CI checks
@@ -14,6 +17,47 @@ Network telemetry corroborates host and identity evidence; it is never treated a
 standalone proof. A platform-neutral `ReachabilityEdge` v2 adapter now places
 these on-premises edges and successful AWS CloudTrail `sts:AssumeRole` events in
 one evidence vocabulary without weakening either platform's native joins.
+
+This repository is the broader detection-engineering portfolio. The proposed
+DFRWS APAC workshop uses the forensic reconstruction component described below
+as its working proof of concept.
+
+## Forensic reconstruction proof of concept
+
+**Workshop direction:** *Tracing the Unauthorized Path: Evidence-Based
+Lateral-Movement Reconstruction*
+
+The proof of concept reconstructs what route an identity actually used and
+evaluates that observed route separately from the identity's entitlement. A
+finding is emitted only when explicit artifact joins and active policy context
+support it. Missing evidence produces `INSUFFICIENT_EVIDENCE`; incomplete policy
+produces `INSUFFICIENT_CONTEXT` rather than an unsupported conclusion.
+
+It demonstrates:
+
+- strict network, host, authentication, logon-ID, and time joins for Windows
+  pivot edges;
+- a shared `ReachabilityEdge` v2 vocabulary for on-premises and AWS evidence;
+- explicit, evidence-referenced identity mappings for cross-environment
+  continuity;
+- three-state route policy: `AUTHORIZED`, `PROHIBITED`, or `UNKNOWN_CONTEXT`;
+- reproducible findings through evidence/context hashes, code revision,
+  parameters, output hashes, and a stable `derivation_id`;
+- measured offline pipeline stages without claiming real-time performance.
+
+This is a **working proof of concept with a clearly defined scope**, not a
+production forensic engine:
+
+| Area | Currently implemented | Not claimed |
+|---|---|---|
+| On premises | PCAP plus Windows `4624`/`4672`/`4648`; RDP and SMB | Every protocol or Windows evidence source |
+| AWS | Successful CloudTrail `sts:AssumeRole` | Every AWS service, workload event, or cloud provider |
+| Progression | Evidence-supported two-hop Windows classification and hybrid v2 edge normalization | Arbitrary-length hybrid graph reasoning |
+| Execution | Deterministic offline batch reconstruction with stage timings | Production-scale or real-time streaming deployment |
+
+Start with [`docs/architecture.md`](docs/architecture.md),
+[`docs/hybrid_reachability.md`](docs/hybrid_reachability.md), and
+[`docs/real_evidence_workflow.md`](docs/real_evidence_workflow.md).
 
 ---
 
@@ -46,8 +90,9 @@ detection-engineering-portfolio/
 Every detection answers four questions in order:
 **hypothesis → query → validation → ATT&CK mapping.**
 
-Architecture at a glance: [`docs/architecture.md`](docs/architecture.md) — the three
-evidence layers (network → identity → endpoint) feeding the correlation rule.
+Architecture at a glance: [`docs/architecture.md`](docs/architecture.md) —
+platform-native evidence becomes evidence-supported edges, which are evaluated
+against identity, session, and route-policy context.
 
 ---
 
@@ -146,7 +191,7 @@ python3 automation/reconstruct_case.py \
 `--cloudtrail` is optional; when present, the same run also emits
 `results/reachability_edges_v2.json` containing the lifted on-premises edges and
 successful AWS `sts:AssumeRole` edges. The current Windows materializer is
-intentionally bounded to **RDP and SMB** and still
+currently limited to **RDP and SMB** and still
 requires the strict network/authentication joins documented in
 [`docs/architecture.md`](docs/architecture.md). See
 [`docs/real_evidence_workflow.md`](docs/real_evidence_workflow.md) for authorized
