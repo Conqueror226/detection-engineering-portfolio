@@ -65,6 +65,8 @@ EXPECTED = {
         ("PRIVILEGED_DESTINATION_REACH", ("WS-ENG-12", "WS-FIN-07", "SRV-APP-01"), "medium")],
     "19_approval_before_start.json": [
         ("POSSIBLE_PRIVILEGED_PROGRESSION", ("WS-ENG-12", "SRV-APP-01", "SRV-FILE-02"), "low")],
+    "20_incomplete_route_policy.json": [
+        ("INSUFFICIENT_CONTEXT", ("WS-ENG-12", "SRV-APP-01", "DC01"), "low")],
 }
 
 

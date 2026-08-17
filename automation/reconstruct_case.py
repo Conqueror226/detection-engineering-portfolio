@@ -1,17 +1,22 @@
 #!/usr/bin/env python3
-"""Run an offline reconstruction over real PCAP and Windows evidence.
+"""Run an offline reconstruction over real PCAP, Windows, and AWS evidence.
 
-The runner preserves the v10 evidence rules. It adds input adapters, provenance,
-quality diagnostics, contract validation, and reviewer-readable outputs.
+The runner preserves the v10 Windows evidence rules. It adds input adapters,
+hybrid v2 normalization, provenance, quality diagnostics, contract validation,
+latency instrumentation, and reviewer-readable outputs.
 """
 from __future__ import annotations
 
 import argparse
 import datetime as dt
+import hashlib
 import io
 import json
+import os
 import pathlib
+import subprocess
 import sys
+import time
 
 from jsonschema import Draft7Validator, FormatChecker
 ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -22,10 +27,18 @@ import sensor as sensor_mod  # noqa: E402
 from build_reachability_graph import ReachabilityGraph  # noqa: E402
 from classify_pivot_progression import classify, load_context  # noqa: E402
 from evidence_io import evidence_descriptor, load_windows_sources  # noqa: E402
+from hybrid_reachability import load_cloudtrail_sources, pivot_edge_to_reachability  # noqa: E402
 from materialize_pivot_edges import materialize  # noqa: E402
 
 
-VERSION = "post-v10-real-evidence-1"
+VERSION = "post-v10-hybrid-evidence-2"
+CONTEXT_FILES = (
+    "asset_tiers.yml",
+    "identity_roles.yml",
+    "expected_admin_paths.yml",
+    "approved_changes.yml",
+    "known_reachability.yml",
+)
 
 
 def _json(path: pathlib.Path):
@@ -42,6 +55,37 @@ def _write_ndjson(path: pathlib.Path, records: list[dict]) -> None:
     with path.open("w", encoding="utf-8") as handle:
         for record in records:
             handle.write(json.dumps(record, sort_keys=True) + "\n")
+
+
+def _code_revision() -> str:
+    for name in ("DETECTION_PORTFOLIO_COMMIT", "GITHUB_SHA"):
+        if os.environ.get(name):
+            return os.environ[name]
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "HEAD"], cwd=ROOT, capture_output=True,
+            text=True, check=True,
+        )
+        return result.stdout.strip() or "unversioned"
+    except (FileNotFoundError, subprocess.CalledProcessError):
+        return "unversioned"
+
+
+def _stable_descriptor(item: dict) -> dict:
+    return {key: item[key] for key in ("role", "file_name", "sha256")}
+
+
+def _derivation_id(code_revision: str, inputs: list[dict], config: dict,
+                   outputs: list[dict]) -> str:
+    stable = {
+        "tool_version": VERSION,
+        "code_revision": code_revision,
+        "inputs": [_stable_descriptor(item) for item in inputs],
+        "configuration": config,
+        "outputs": [_stable_descriptor(item) for item in outputs],
+    }
+    encoded = json.dumps(stable, sort_keys=True, separators=(",", ":")).encode()
+    return hashlib.sha256(encoded).hexdigest()
 
 
 def _shift_timestamp(event: dict, seconds: float) -> None:
@@ -77,11 +121,14 @@ def load_network_sources(paths: list[pathlib.Path], observer: str, offset_second
     return events, stats
 
 
-def validate_outputs(edges: list[dict], findings: list[dict]) -> list[str]:
+def validate_outputs(edges: list[dict], findings: list[dict],
+                     reachability_edges: list[dict]) -> list[str]:
     edge_schema = _json(ROOT / "schemas" / "pivot_edge.schema.json")
     finding_schema = _json(ROOT / "schemas" / "progression_finding.schema.json")
+    reachability_schema = _json(ROOT / "schemas" / "reachability_edge.schema.json")
     edge_validator = Draft7Validator(edge_schema, format_checker=FormatChecker())
     finding_validator = Draft7Validator(finding_schema, format_checker=FormatChecker())
+    reachability_validator = Draft7Validator(reachability_schema, format_checker=FormatChecker())
     errors = []
     for index, edge in enumerate(edges):
         for error in edge_validator.iter_errors(edge):
@@ -89,6 +136,9 @@ def validate_outputs(edges: list[dict], findings: list[dict]) -> list[str]:
     for index, finding in enumerate(findings):
         for error in finding_validator.iter_errors(finding):
             errors.append(f"finding[{index}]: {error.message}")
+    for index, edge in enumerate(reachability_edges):
+        for error in reachability_validator.iter_errors(edge):
+            errors.append(f"reachability_edge[{index}]: {error.message}")
     return errors
 
 
@@ -98,6 +148,7 @@ def _escape(value) -> str:
 
 def build_report(case_name: str, manifest_inputs: list[dict], network_stats: list[dict],
                  windows_stats: dict, edges: list[dict], findings: list[dict],
+                 reachability_edges: list[dict], cloud_stats: dict,
                  validation_errors: list[str], config: dict) -> str:
     lines = [
         f"# Reconstruction report — {case_name}",
@@ -119,6 +170,8 @@ def build_report(case_name: str, manifest_inputs: list[dict], network_stats: lis
         f"- Recognized Windows events: **{windows_stats['recognized_windows_events']}**",
         f"- Event distribution: `{json.dumps(windows_stats['by_event_code'], sort_keys=True)}`",
         f"- Materialized pivot edges: **{len(edges)}**",
+        f"- Unified reachability edges: **{len(reachability_edges)}**",
+        f"- AWS AssumeRole edges: **{sum(item['accepted_records'] for item in cloud_stats['sources'])}**",
         f"- Progression findings: **{len(findings)}**",
         f"- Network/logon join window: **{config['network_window_seconds']} seconds**",
         f"- Applied network time offset: **{config['network_time_offset_seconds']} seconds**",
@@ -171,7 +224,8 @@ def build_report(case_name: str, manifest_inputs: list[dict], network_stats: lis
         "",
         "- A materialized edge means the configured flow, authentication, host/IP, service/logon-type, and time joins were satisfied.",
         "- Absence of an edge is not proof that movement did not occur; collection gaps, clock skew, unsupported services, NAT, or incomplete host mapping can prevent a join.",
-        "- Route authorization depends on the supplied organizational context and must be reviewed by the examiner.",
+        "- Route authorization depends on active, explicitly scoped organizational policy; incomplete scope yields insufficient context, not prohibition.",
+        "- Cross-environment identity continuity requires an explicit, evidence-referenced mapping; name, time, or IP similarity is not enough.",
         "- Native EVTX does not contain the local host IP; any host-IP enrichment comes only from the examiner-provided map and is recorded as an input.",
         "",
     ]
@@ -185,6 +239,8 @@ def parse_args(argv=None):
                         help="PCAP/PCAPNG file; repeat for multiple captures")
     parser.add_argument("--windows", action="append", required=True, type=pathlib.Path,
                         help="EVTX, JSON, NDJSON, or Elasticsearch _search export; repeatable")
+    parser.add_argument("--cloudtrail", action="append", default=[], type=pathlib.Path,
+                        help="CloudTrail JSON/NDJSON/Elasticsearch export; repeatable")
     parser.add_argument("--ip-map", required=True, type=pathlib.Path,
                         help="JSON object mapping IP address to canonical host name")
     parser.add_argument("--context-dir", type=pathlib.Path, default=ROOT / "automation" / "context")
@@ -200,8 +256,9 @@ def parse_args(argv=None):
 
 
 def main(argv=None) -> int:
+    pipeline_started = time.perf_counter()
     args = parse_args(argv)
-    for path in [*args.pcap, *args.windows, args.ip_map]:
+    for path in [*args.pcap, *args.windows, *args.cloudtrail, args.ip_map]:
         if not path.is_file():
             print(f"missing input: {path}", file=sys.stderr)
             return 2
@@ -209,12 +266,23 @@ def main(argv=None) -> int:
         print(f"missing context directory: {args.context_dir}", file=sys.stderr)
         return 2
 
+    stage_started = time.perf_counter()
     raw_map = _json(args.ip_map)
     ip_map = {str(key): str(value) for key, value in raw_map.items()}
     network_events, network_stats = load_network_sources(
         args.pcap, args.observer_hostname, args.network_time_offset_seconds
     )
+    network_ingest_ms = (time.perf_counter() - stage_started) * 1000
+
+    stage_started = time.perf_counter()
     windows_events, windows_stats = load_windows_sources(args.windows, ip_map)
+    windows_ingest_ms = (time.perf_counter() - stage_started) * 1000
+
+    stage_started = time.perf_counter()
+    cloud_edges, cloud_stats = load_cloudtrail_sources(args.cloudtrail)
+    cloud_ingest_ms = (time.perf_counter() - stage_started) * 1000
+
+    stage_started = time.perf_counter()
     edges = materialize(
         network_events + windows_events,
         ip_map,
@@ -222,26 +290,41 @@ def main(argv=None) -> int:
         priv_window_s=args.privilege_window_seconds,
         transition_window_s=args.transition_window_seconds,
     )
+    edge_materialization_ms = (time.perf_counter() - stage_started) * 1000
+
+    stage_started = time.perf_counter()
     graph = ReachabilityGraph.from_records(edges)
     findings = classify(
         graph, load_context(args.context_dir), window_minutes=args.progression_window_minutes
     )
-    validation_errors = validate_outputs(edges, findings)
+    graph_classification_ms = (time.perf_counter() - stage_started) * 1000
 
+    stage_started = time.perf_counter()
+    reachability_edges = [pivot_edge_to_reachability(edge) for edge in edges]
+    reachability_edges.extend(cloud_edges)
+    reachability_edges.sort(key=lambda item: (item["@timestamp"], item["edge_id"]))
+    validation_errors = validate_outputs(edges, findings, reachability_edges)
+    hybrid_normalization_ms = (time.perf_counter() - stage_started) * 1000
+
+    stage_started = time.perf_counter()
     out = args.out_dir
     _write_ndjson(out / "normalized" / "network.ndjson", network_events)
     _write_ndjson(out / "normalized" / "windows.ndjson", windows_events)
     _write_json(out / "results" / "pivot_edges.json", edges)
+    _write_json(out / "results" / "reachability_edges_v2.json", reachability_edges)
     _write_json(out / "results" / "findings.json", findings)
     _write_json(out / "results" / "data_quality.json", {
         "network_sources": network_stats,
         "windows": windows_stats,
+        "cloudtrail": cloud_stats,
         "contract_errors": validation_errors,
     })
 
     inputs = [evidence_descriptor(path, "network_capture") for path in args.pcap]
     inputs += [evidence_descriptor(path, "windows_events") for path in args.windows]
+    inputs += [evidence_descriptor(path, "aws_cloudtrail") for path in args.cloudtrail]
     inputs.append(evidence_descriptor(args.ip_map, "host_mapping"))
+    inputs += [evidence_descriptor(args.context_dir / name, "context") for name in CONTEXT_FILES]
     config = {
         "network_window_seconds": args.network_window_seconds,
         "privilege_window_seconds": args.privilege_window_seconds,
@@ -252,7 +335,7 @@ def main(argv=None) -> int:
     }
     report = build_report(
         args.case_name, inputs, network_stats, windows_stats, edges, findings,
-        validation_errors, config,
+        reachability_edges, cloud_stats, validation_errors, config,
     )
     report_path = out / "results" / "reconstruction_report.md"
     report_path.write_text(report, encoding="utf-8")
@@ -261,24 +344,43 @@ def main(argv=None) -> int:
         out / "normalized" / "network.ndjson",
         out / "normalized" / "windows.ndjson",
         out / "results" / "pivot_edges.json",
+        out / "results" / "reachability_edges_v2.json",
         out / "results" / "findings.json",
         out / "results" / "data_quality.json",
         report_path,
     ]
+    outputs = [evidence_descriptor(path, "derived_output") for path in output_paths]
+    output_write_ms = (time.perf_counter() - stage_started) * 1000
+    performance = {
+        "network_ingest_ms": round(network_ingest_ms, 3),
+        "windows_ingest_ms": round(windows_ingest_ms, 3),
+        "cloud_ingest_ms": round(cloud_ingest_ms, 3),
+        "edge_materialization_ms": round(edge_materialization_ms, 3),
+        "graph_classification_ms": round(graph_classification_ms, 3),
+        "hybrid_normalization_ms": round(hybrid_normalization_ms, 3),
+        "derived_output_write_ms": round(output_write_ms, 3),
+        "pipeline_total_ms": round((time.perf_counter() - pipeline_started) * 1000, 3),
+    }
+    code_revision = _code_revision()
     manifest = {
-        "schema_version": 1,
+        "schema_version": 2,
         "case_name": args.case_name,
         "generated_at_utc": dt.datetime.now(tz=dt.timezone.utc).isoformat().replace("+00:00", "Z"),
         "tool_version": VERSION,
+        "code_revision": code_revision,
         "inputs": inputs,
         "configuration": config,
         "counts": {
             "network_events": len(network_events),
             "windows_events": len(windows_events),
             "pivot_edges": len(edges),
+            "reachability_edges_v2": len(reachability_edges),
+            "aws_reachability_edges": len(cloud_edges),
             "findings": len(findings),
         },
-        "outputs": [evidence_descriptor(path, "derived_output") for path in output_paths],
+        "outputs": outputs,
+        "performance": performance,
+        "derivation_id": _derivation_id(code_revision, inputs, config, outputs),
     }
     _write_json(out / "manifest.json", manifest)
 
@@ -286,7 +388,10 @@ def main(argv=None) -> int:
     print(f"network events: {len(network_events)}")
     print(f"windows events: {len(windows_events)}")
     print(f"pivot edges: {len(edges)}")
+    print(f"reachability edges v2: {len(reachability_edges)} ({len(cloud_edges)} AWS)")
     print(f"findings: {len(findings)}")
+    print(f"derivation id: {manifest['derivation_id']}")
+    print(f"pipeline runtime: {performance['pipeline_total_ms']} ms")
     print(f"report: {report_path}")
     if validation_errors:
         print(f"contract errors: {len(validation_errors)}", file=sys.stderr)

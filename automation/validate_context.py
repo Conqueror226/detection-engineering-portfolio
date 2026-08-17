@@ -15,6 +15,7 @@ from __future__ import annotations
 import json
 import pathlib
 import sys
+import datetime as dt
 
 import yaml
 
@@ -63,17 +64,34 @@ def main() -> int:
         if p.get("identity") not in identities:
             errors.append(f"expected_admin_paths: identity '{p.get('identity')}' not in identity_roles")
 
+    policy_metadata = ctx["expected_admin_paths"].get("policy_metadata") or {}
+    policy_dates = {}
+    for key in ("valid_from", "valid_until"):
+        try:
+            policy_dates[key] = dt.date.fromisoformat(str(policy_metadata.get(key)))
+        except ValueError:
+            errors.append(f"expected_admin_paths: {key}={policy_metadata.get(key)!r} is not an ISO date")
+    if (policy_dates.get("valid_from") and policy_dates.get("valid_until")
+            and policy_dates["valid_from"] > policy_dates["valid_until"]):
+        errors.append("expected_admin_paths: valid_from must not be after valid_until")
+    for scope in policy_metadata.get("complete_for", []):
+        if scope.get("identity") not in identities:
+            errors.append(f"expected_admin_paths.complete_for: identity '{scope.get('identity')}' not in identity_roles")
+        if not isinstance(scope.get("environment"), str) or not scope.get("environment"):
+            errors.append("expected_admin_paths.complete_for: environment must be a non-empty string")
+        if not isinstance(scope.get("target_tier"), int):
+            errors.append("expected_admin_paths.complete_for: target_tier must be an integer")
+
     for c in ctx["approved_changes"].get("approved_changes", []):
         if c.get("identity") not in identities:
             errors.append(f"approved_changes: identity '{c.get('identity')}' not in identity_roles")
         if c.get("target_host") not in hosts:
             errors.append(f"approved_changes: host '{c.get('target_host')}' not in asset_tiers")
         # approval date/type validation
-        import datetime as _dt
         for k in ("approved_from", "approved_until"):
             if k in c:
                 try:
-                    _dt.date.fromisoformat(str(c[k]))
+                    dt.date.fromisoformat(str(c[k]))
                 except ValueError:
                     errors.append(f"approved_changes: {k}={c[k]!r} is not an ISO date")
         for k in ("via", "service", "ticket"):

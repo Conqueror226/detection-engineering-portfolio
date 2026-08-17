@@ -1,79 +1,79 @@
-# Architecture: Edge → Context → Graph → Progression
+# Architecture: Evidence → Edge → Context → Progression
 
 Single-host detections can see a privileged logon, but not whether that session
-*created a new path*, *crossed an administrative boundary*, or *expanded access
-toward critical assets*. This portfolio reconstructs that progression in four
-stages: raw telemetry becomes an evidence-supported **edge**, the edge is judged against
-organisational **context**, edges compose into a reachability **graph**, and the
-graph yields a **progression finding**.
+created a new path, crossed an administrative boundary, or expanded access
+toward critical assets. This portfolio reconstructs that progression from
+evidence-supported edges and now uses a v2 vocabulary that can represent both
+on-premises and AWS activity without erasing platform-native proof.
 
 ```mermaid
 flowchart TD
-  subgraph SRC["Raw telemetry"]
-    N["Network flow<br/>(Scapy ECS sensor)"]
-    A["4624 / 4672 / 4648<br/>session identity + privilege"]
-  end
-
-  N --> M["Edge materialization<br/>enforce session joins:<br/>net.src==4624 IpAddress · net.dst==4624 host.ip · TargetLogonId==SubjectLogonId"]
-  A --> M
-  M --> E["PivotEdge<br/><i>confirmed / absent / unknown states</i>"]
-
-  E --> CTX["Organizational context<br/>asset tiers · identity roles · admin paths ·<br/>approved changes · known reachability"]
-  CTX --> G["Multi-hop progression graph<br/>identity continuity · window · novelty"]
-  G --> F["Progression finding<br/>e.g. CRITICAL_UNAPPROVED_PATH"]
-
-  classDef src fill:#e8eef7,stroke:#33517a,color:#1a2b45;
-  classDef edge fill:#eef5ec,stroke:#3d6b34,color:#1f3a1a;
-  classDef corr fill:#f7efe6,stroke:#8a5a1f,color:#4a3210;
-  class N,A src;
-  class M,E edge;
-  class CTX,G,F corr;
+  W["On-prem evidence<br/>PCAP + 4624/4672/4648"] --> P["Strict Windows joins<br/>PivotEdge v1"]
+  C["AWS CloudTrail<br/>successful STS AssumeRole"] --> A["Cloud adapter<br/>native event joins"]
+  P --> U["ReachabilityEdge v2<br/>shared subject/session/target"]
+  A --> U
+  U --> G["Indexed graph + policy<br/>finding or abstention"]
 ```
 
-## Contracts (frozen first)
+## Contracts
 
-The layers speak through frozen schemas in `schemas/`, so logic can be rewritten
-without destabilising the format:
+The layers speak through schemas in `schemas/`, so adapters can evolve without
+breaking existing consumers:
 
+```text
+Windows evidence → PivotEdge v1 ┐
+                                ├→ ReachabilityEdge v2
+AWS CloudTrail ─────────────────┘
+
+PivotEdge v1 → ProgressionFinding (current bounded classifier)
 ```
-Raw telemetry → PivotEdge → ProgressionFinding
-```
 
-`validate_schemas.py` checks every edge fixture against `pivot_edge.schema.json`;
-`validate_context.py` checks context structure and referential integrity.
+`PivotEdge` v1 is intentionally retained. `ReachabilityEdge` v2 adds
+platform-neutral entities, sessions, transition state, and evidence references.
+`validate_schemas.py` checks the schemas and Windows scenarios;
+`test_hybrid_reachability.py` validates both adapters.
 
 ## Division of labour
 
 | Stage | Where | Responsibility |
 |---|---|---|
-| Telemetry | `sensor/` | ECS network flows |
-| Edge | Elastic edge *candidate* rule + `materialize_pivot_edges.py` | one evidence-supported pivot edge with enforced session joins (service/LogonType compat, IP + logon-id joins, 4648 on the outgoing hop, session lineage) |
-| Context | `automation/context/` | tiers, roles, sanctioned paths, approvals, known reachability |
-| Graph + finding | `build_reachability_graph.py` · `classify_pivot_progression.py` | compose edges, classify progression |
+| Telemetry | `sensor/` · Windows Security · AWS CloudTrail | captured network, authentication, session, and cloud-management evidence |
+| Windows edge | Elastic edge *candidate* rule + `materialize_pivot_edges.py` | enforce service/LogonType compatibility, IP and logon-ID joins, 4648 on the outgoing hop, and session lineage |
+| Hybrid adapter | `hybrid_reachability.py` | lift PivotEdge v1 and materialize successful CloudTrail AssumeRole events into v2 without name/time-based identity inference |
+| Context | `automation/context/` | tiers, roles, sanctioned paths, policy scope, approvals, and known reachability |
+| Graph + finding | `build_reachability_graph.py` · `classify_pivot_progression.py` | compose compatible edges and classify or abstain |
 
 ## The rule that pierces the blind spot
 
 Entitlement and route authorization are independent facts:
 
-```
+```text
 identity_entitled_to_tier0 = true
-route_authorized           = false
+route_policy_state         = PROHIBITED
 target_critical            = true
 → CRITICAL_UNAPPROVED_PATH
 ```
 
-A Domain Admin entitled to Tier 0 who reaches a DC by an unapproved route is
-still critical. That separation is what earlier single-hop framing missed.
+A Domain Admin entitled to Tier 0 who reaches a DC by a prohibited route is
+still critical. The policy decision is three-state: `AUTHORIZED`, `PROHIBITED`,
+or `UNKNOWN_CONTEXT`. An absent allow-list entry becomes `PROHIBITED` only when
+the policy is active and declares itself complete for that environment,
+identity, and target tier. Otherwise the classifier abstains.
 
 ## Honest boundaries
 
-- **Edge materialization is implemented** (`materialize_pivot_edges.py`) and the
-  strict session joins are enforced and exercised end-to-end by
-  `automation/test_pipeline.py` (pcap → sensor → materializer → graph → finding).
-  The EQL rule remains an edge *candidate* generator; the materializer is what
-  makes an edge evidence-supported. Native EVTX/Elastic-export ingestion and real
-  PCAP replay are implemented by `evidence_io.py` and `reconstruct_case.py`;
-  operational validation still requires a separately retained authorized lab case.
-  Live Elastic rule import/ES|QL execution remains outside CI.
-- **Bounded, not a full graph engine** — arbitrary-length reachability is the FIRE
-  engine; this shows a verified bounded slice and points to FIRE for the general case.
+- **Edge materialization is implemented.** Strict Windows joins are exercised
+  end-to-end by `automation/test_pipeline.py`. Native EVTX/Elastic-export
+  ingestion and real PCAP replay are implemented by `evidence_io.py` and
+  `reconstruct_case.py`. Live Elastic rule import and ES|QL execution remain
+  outside CI.
+- **The AWS slice is deliberately narrow.** It currently materializes successful
+  `sts:AssumeRole`; it does not yet model every cloud service or workload plane.
+- **Bounded, not a full graph engine.** The current classifier evaluates two-hop
+  PivotEdge v1 progression. ReachabilityEdge v2 establishes the hybrid contract
+  and adapters; arbitrary-length hybrid FIRE reasoning remains future work.
+- **Batch latency, not real-time latency.** `reconstruct_case.py` measures each
+  offline stage and the total pipeline. A stateful streaming deployment can use
+  the same edge contracts, but is not implemented or claimed here.
+- **No ML in the evidence path.** Deterministic joins and explicit policy make
+  the examiner's result re-derivable. ML may prioritize confirmed findings only.

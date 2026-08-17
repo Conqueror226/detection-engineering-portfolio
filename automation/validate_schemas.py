@@ -61,7 +61,9 @@ def semantic_errors(edges, fname):
 def main() -> int:
     edge_schema = json.loads((SCHEMAS / "pivot_edge.schema.json").read_text())
     finding_schema = json.loads((SCHEMAS / "progression_finding.schema.json").read_text())
-    for name, s in (("pivot_edge", edge_schema), ("progression_finding", finding_schema)):
+    reachability_schema = json.loads((SCHEMAS / "reachability_edge.schema.json").read_text())
+    for name, s in (("pivot_edge", edge_schema), ("progression_finding", finding_schema),
+                    ("reachability_edge", reachability_schema)):
         Draft7Validator.check_schema(s)
 
     edge_v = Draft7Validator(edge_schema, format_checker=FormatChecker())

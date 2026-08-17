@@ -1,0 +1,85 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ReachabilityEdgeV2",
+  "description": "Platform-neutral, evidence-supported reachability edge. PivotEdge v1 remains the frozen Windows-specific contract.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "edge_id",
+    "@timestamp",
+    "environment",
+    "edge_type",
+    "subject",
+    "effective_subject",
+    "source",
+    "target",
+    "session",
+    "auth_state",
+    "privilege_state",
+    "evidence_refs",
+    "native_context"
+  ],
+  "properties": {
+    "schema_version": {"const": "2.0"},
+    "edge_id": {"type": "string", "minLength": 1},
+    "@timestamp": {"type": "string", "format": "date-time"},
+    "environment": {"type": "string", "enum": ["on_prem", "aws"]},
+    "edge_type": {"type": "string", "enum": ["authenticated_to", "assumed_role", "accessed_resource"]},
+    "subject": {"$ref": "#/definitions/entity"},
+    "effective_subject": {"$ref": "#/definitions/entity"},
+    "source": {"$ref": "#/definitions/entity"},
+    "target": {"$ref": "#/definitions/entity"},
+    "session": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "parent_session_id", "state"],
+      "properties": {
+        "id": {"type": ["string", "null"]},
+        "parent_session_id": {"type": ["string", "null"]},
+        "state": {"type": "string", "enum": ["confirmed", "unknown"]}
+      }
+    },
+    "auth_state": {"type": "string", "enum": ["confirmed", "absent", "unknown"]},
+    "privilege_state": {"type": "string", "enum": ["confirmed", "absent", "unknown"]},
+    "credential_transition": {
+      "type": ["object", "null"],
+      "required": ["from_subject", "to_subject", "state", "evidence_ref"],
+      "properties": {
+        "from_subject": {"$ref": "#/definitions/entity"},
+        "to_subject": {"$ref": "#/definitions/entity"},
+        "state": {"type": "string", "enum": ["confirmed", "unknown"]},
+        "evidence_ref": {"type": ["string", "null"]}
+      },
+      "additionalProperties": false
+    },
+    "evidence_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["source_type", "evidence_ref"],
+        "properties": {
+          "source_type": {"type": "string", "minLength": 1},
+          "evidence_ref": {"type": "string", "minLength": 1},
+          "source_file": {"type": "string", "minLength": 1},
+          "source_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+        }
+      }
+    },
+    "native_context": {"type": "object"}
+  },
+  "definitions": {
+    "entity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "id"],
+      "properties": {
+        "kind": {"type": "string", "minLength": 1},
+        "id": {"type": "string", "minLength": 1},
+        "display_name": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}

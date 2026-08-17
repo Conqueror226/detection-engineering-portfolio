@@ -1,0 +1,38 @@
+[
+  {
+    "edge_id": "e0040",
+    "@timestamp": "2026-08-10T10:00:00Z",
+    "source_host": "WS-ENG-12",
+    "target_host": "SRV-APP-01",
+    "identity": "CORP\\bob",
+    "effective_identity": "CORP\\bob",
+    "service": "rdp",
+    "logon_id": "0xe0040",
+    "privilege_state": "absent",
+    "auth_state": "confirmed",
+    "credential_transition": null,
+    "evidence_refs": {
+      "network": "net-e0040",
+      "logon": "log-e0040",
+      "privilege": null
+    }
+  },
+  {
+    "edge_id": "e0041",
+    "@timestamp": "2026-08-10T10:05:00Z",
+    "source_host": "SRV-APP-01",
+    "target_host": "DC01",
+    "identity": "CORP\\bob",
+    "effective_identity": "CORP\\bob",
+    "service": "rdp",
+    "logon_id": "0xe0041",
+    "privilege_state": "absent",
+    "auth_state": "confirmed",
+    "credential_transition": null,
+    "evidence_refs": {
+      "network": "net-e0041",
+      "logon": "log-e0041",
+      "privilege": null
+    }
+  }
+]

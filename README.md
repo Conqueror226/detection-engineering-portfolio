@@ -11,7 +11,9 @@ complemented by widely-recognised "classic" detections for range. A Scapy-based
 **ECS network sensor** adds a network-evidence layer, enabling a full-chain
 signature: **network connection → authenticated pivot → process execution**.
 Network telemetry corroborates host and identity evidence; it is never treated as
-standalone proof.
+standalone proof. A platform-neutral `ReachabilityEdge` v2 adapter now places
+these on-premises edges and successful AWS CloudTrail `sts:AssumeRole` events in
+one evidence vocabulary without weakening either platform's native joins.
 
 ---
 
@@ -30,11 +32,13 @@ detection-engineering-portfolio/
 ├── automation/                 # Python tooling (validation, logic/sensor/progression tests, coverage)
 │   ├── evidence_io.py               # EVTX/JSON/NDJSON/Elastic export normalization
 │   ├── reconstruct_case.py           # offline evidence -> edges -> findings -> report
+│   ├── hybrid_reachability.py         # PivotEdge v1 + CloudTrail -> ReachabilityEdge v2
 │   ├── build_reachability_graph.py   # edges -> directed reachability graph
 │   ├── classify_pivot_progression.py # progression classifier (admin blind-spot)
 │   └── context/                      # tier/role/path/approval context (FIRE-style)
 ├── cases/                      # instructions only; real case evidence is git-ignored
 ├── attack_navigator/           # generated ATT&CK Navigator coverage layer
+├── schemas/                    # v1 Windows + v2 hybrid evidence contracts
 ├── docs/                       # methodology and design notes
 └── .github/workflows/          # CI that validates every rule on push
 ```
@@ -87,9 +91,11 @@ On every push and pull request to `main`, GitHub Actions runs the full gate set:
 3. **Sensor tests** (`test_sensor.py`) — the Scapy ECS sensor is run in
    pcap-replay mode over its fixtures and its ECS output is asserted (RDP flow
    labelled, scan fan-out present, benign traffic flat). No privileges needed.
-4. **Real-input adapter and case-runner tests** (`test_evidence_io.py`,
-   `test_reconstruct_case.py`) — verify JSON, NDJSON, Elasticsearch exports,
-   host-map enrichment, evidence hashing, output contracts, and the complete
+4. **Real-input, hybrid-adapter, and case-runner tests** (`test_evidence_io.py`,
+   `test_hybrid_reachability.py`, `test_reconstruct_case.py`) — verify JSON,
+   NDJSON, Elasticsearch exports, host-map enrichment, Windows-to-v2 lifting,
+   CloudTrail AssumeRole materialization, evidence hashing, stable derivation
+   IDs, performance measurements, output contracts, and the complete
    evidence-to-report workflow. Native EVTX uses the same adapter in operational
    runs; real evidence is deliberately not committed to CI.
 
@@ -108,7 +114,7 @@ open [ATT&CK Navigator](https://mitre-attack.github.io/attack-navigator/), choos
 ## Local setup
 
 ```bash
-git clone https://github.com/<your-username>/detection-engineering-portfolio.git
+git clone https://github.com/Conqueror226/detection-engineering-portfolio.git
 cd detection-engineering-portfolio
 python3 -m venv .venv && source .venv/bin/activate
 python3 -m pip install -r requirements.txt
@@ -132,15 +138,53 @@ python3 automation/reconstruct_case.py \
   --pcap /secure-evidence/lab-rdp-pivot-01.pcap \
   --windows /secure-evidence/SRV-APP-01-Security.evtx \
   --windows /secure-evidence/DC01-Security.evtx \
+  --cloudtrail /secure-evidence/cloudtrail-management-events.json \
   --ip-map /secure-evidence/ip_to_host.json \
   --out-dir /secure-results/lab-rdp-pivot-01
 ```
 
-The current materializer is intentionally bounded to **RDP and SMB** and still
+`--cloudtrail` is optional; when present, the same run also emits
+`results/reachability_edges_v2.json` containing the lifted on-premises edges and
+successful AWS `sts:AssumeRole` edges. The current Windows materializer is
+intentionally bounded to **RDP and SMB** and still
 requires the strict network/authentication joins documented in
 [`docs/architecture.md`](docs/architecture.md). See
 [`docs/real_evidence_workflow.md`](docs/real_evidence_workflow.md) for authorized
 collection, host mapping, clock checks, Elastic export shapes, and interpretation.
+
+## Normalize on-premises and AWS evidence
+
+`PivotEdge` v1 remains the frozen Windows-specific contract. The v2 adapter adds
+a platform-neutral representation rather than breaking v1 consumers. It accepts
+the v1 results above and/or CloudTrail JSON, NDJSON, or Elasticsearch exports:
+
+```bash
+python3 automation/hybrid_reachability.py \
+  --pivot-edges /secure-results/lab-rdp-pivot-01/results/pivot_edges.json \
+  --cloudtrail /secure-evidence/cloudtrail-management-events.json \
+  --out /secure-results/lab-rdp-pivot-01/results/reachability_edges_v2.json \
+  --quality-output /secure-results/lab-rdp-pivot-01/results/cloud_quality.json
+```
+
+The AWS adapter currently materializes successful `sts:AssumeRole` transitions.
+Cross-environment continuity is confirmed only through an explicit,
+evidence-referenced identity mapping; matching usernames, timestamps, or IPs do
+not establish the bridge. See
+[`docs/hybrid_reachability.md`](docs/hybrid_reachability.md).
+
+## Automation, latency, and ML boundary
+
+The core is deterministic and training-free: adapters normalize evidence, strict
+joins materialize edges, an indexed graph composes compatible sessions, and
+policy classifies the observed route. `manifest.json` records per-stage batch
+runtime, every evidence and context hash, the code revision, and a stable
+`derivation_id`. These are measurements of offline reconstruction latency, not a
+real-time detection claim. Stateful streaming joins are a future deployment mode
+for the same contracts.
+
+Machine learning is intentionally outside the evidentiary core. It may rank
+already materialized findings for analyst review, but it must not manufacture an
+edge, confirm identity continuity, or turn missing policy into prohibition.
 
 ---
 
@@ -151,6 +195,8 @@ collection, host mapping, clock checks, Elastic export shapes, and interpretatio
   offline runner processes real lab artifacts from external, git-ignored paths
   and records their SHA-256 provenance.
 - **Traceable** — every detection maps to ATT&CK and cites its references.
+- **Abstention-aware** — missing evidence yields `INSUFFICIENT_EVIDENCE`; policy
+  outside a declared complete/active scope yields `INSUFFICIENT_CONTEXT`.
 - **Falsifiable** — every detection ships a true-positive and a false-positive sample. For EQL detections CI executes the query against both and asserts the expected outcome (including a `maxspan` timing case); ES|QL samples are not executed in CI and are provided for manual validation on a live stack.
 
 ---

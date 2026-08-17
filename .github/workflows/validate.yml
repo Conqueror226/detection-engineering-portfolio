@@ -36,6 +36,7 @@ jobs:
           python3 automation/test_edge_materialization.py
           python3 automation/test_pipeline.py
           python3 automation/test_evidence_io.py
+          python3 automation/test_hybrid_reachability.py
           python3 automation/test_reconstruct_case.py
 
       - name: Validate all detection rules

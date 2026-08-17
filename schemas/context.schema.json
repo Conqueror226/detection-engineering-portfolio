@@ -6,7 +6,49 @@
   "properties": {
     "asset_tiers": {"type": "object", "required": ["hosts", "default"]},
     "identity_roles": {"type": "object", "required": ["identities", "default"]},
-    "expected_admin_paths": {"type": "object", "required": ["approved_paths"]},
+    "expected_admin_paths": {
+      "type": "object",
+      "required": ["policy_metadata", "approved_paths"],
+      "properties": {
+        "policy_metadata": {
+          "type": "object",
+          "required": ["policy_id", "version", "source", "valid_from", "valid_until", "complete_for"],
+          "properties": {
+            "policy_id": {"type": "string", "minLength": 1},
+            "version": {"type": "string", "minLength": 1},
+            "source": {"type": "string", "minLength": 1},
+            "valid_from": {"type": "string", "format": "date"},
+            "valid_until": {"type": "string", "format": "date"},
+            "complete_for": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["environment", "identity", "target_tier"],
+                "properties": {
+                  "environment": {"type": "string", "minLength": 1},
+                  "identity": {"type": "string", "minLength": 1},
+                  "target_tier": {"type": "integer", "minimum": 0}
+                },
+                "additionalProperties": false
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "approved_paths": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["identity", "via", "to_tier"],
+            "properties": {
+              "identity": {"type": "string", "minLength": 1},
+              "via": {"type": "string", "minLength": 1},
+              "to_tier": {"type": "integer", "minimum": 0}
+            }
+          }
+        }
+      }
+    },
     "approved_changes": {"type": "object", "required": ["approved_changes"]},
     "known_reachability": {"type": "object", "required": ["known_edges"]}
   }
