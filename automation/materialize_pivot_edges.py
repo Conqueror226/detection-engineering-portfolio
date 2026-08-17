@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Materialize trustworthy PivotEdges from raw ECS + Windows events.
+"""Materialize evidence-supported PivotEdges from raw ECS + Windows events.
 
 Only emits an edge when the evidence supports it:
 
@@ -35,7 +35,9 @@ SERVICE_BY_LOGON = {("3389", "10"): "rdp", ("445", "3"): "smb"}
 
 def _ts(e): return datetime.datetime.fromisoformat(e["@timestamp"].replace("Z", "+00:00"))
 def _ed(e): return (e.get("winlog", {}) or {}).get("event_data", {}) or {}
-def _code(e): return (e.get("event", {}) or {}).get("code")
+def _code(e):
+    value = (e.get("event", {}) or {}).get("code")
+    return str(value) if value is not None else None
 def _cats(e):
     c = (e.get("event", {}) or {}).get("category")
     return c if isinstance(c, list) else [c] if c else []
@@ -64,6 +66,27 @@ def _norm_identity(user, domain):
     if "\\" in user or "@" in user:
         return user
     return f"{domain}\\{user}" if domain else user
+
+
+def _host_aliases(value) -> set[str]:
+    if not value:
+        return set()
+    name = str(value).strip().rstrip(".").lower()
+    return {name, name.split(".", 1)[0]}
+
+
+def _host_equivalent(observed, target_host, target_ip, ip_to_host) -> bool:
+    """Match DNS short/FQDN/IP representations without inventing a host link."""
+    if not observed:
+        return False
+    observed_text = str(observed).strip()
+    if observed_text == target_ip:
+        return True
+    aliases = _host_aliases(observed_text)
+    aliases |= _host_aliases(ip_to_host.get(observed_text))
+    target_aliases = _host_aliases(target_host)
+    target_aliases |= _host_aliases(ip_to_host.get(target_ip))
+    return bool(aliases & target_aliases)
 
 
 def _edge_id(*parts) -> str:
@@ -141,7 +164,8 @@ def materialize(events, ip_to_host=None, network_window_s=120,
             cd = _ed(c)
             slid = cd.get("SubjectLogonId")
             to_id = _norm_identity(cd.get("TargetUserName"), cd.get("TargetDomainName"))
-            if slid and to_id == user and cd.get("TargetServerName") == target_host \
+            if slid and to_id == user \
+               and _host_equivalent(cd.get("TargetServerName"), target_host, target_ip, ip_to_host) \
                and 0 <= (t_logon - _ts(c)).total_seconds() <= transition_window_s:
                 cred_cands.append(c)
         cred_cands.sort(key=_ts)

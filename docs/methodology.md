@@ -33,7 +33,12 @@ Rules are text files under version control. Every push runs
 mapping fails the build before it is merged. This mirrors how a mature SOC
 manages detection content and keeps the portfolio honest.
 
-## Data hygiene
+## Data hygiene and external validation
 
-All events under `test_data/` are synthetic. No production logs, real IP
-addresses, hostnames, or account names appear anywhere in this repository.
+All committed events under `test_data/` are synthetic, so CI remains public,
+deterministic, and free of production identifiers. Real EVTX, Elastic exports,
+PCAPs, normalized evidence, and case reports are processed from git-ignored,
+access-controlled paths by `automation/reconstruct_case.py`. The resulting
+manifest records input/output SHA-256 values and parameters. Only aggregate,
+reviewed validation results may be added to the repository; raw evidence stays in
+controlled storage.

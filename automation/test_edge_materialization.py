@@ -81,6 +81,19 @@ def main() -> int:
     if not (bc and bc[0]["credential_transition"] and bc[0]["source_logon_id"] == "0xA1"):
         fails.append(f"transition not on outgoing B->C edge with lineage: {bc}")
 
+    # Real Windows logs frequently record TargetServerName as an FQDN while
+    # host.name/context use the short name; the two representations must join.
+    fqdn_ev = list(ev)
+    fqdn_cred = dict(fqdn_ev[-1])
+    fqdn_cred["winlog"] = {"event_data": dict(fqdn_ev[-1]["winlog"]["event_data"])}
+    fqdn_cred["winlog"]["event_data"]["TargetServerName"] = "dc01.corp.example"
+    fqdn_ev[-1] = fqdn_cred
+    fqdn_edges = materialize(fqdn_ev, {**IPMAP, "10.0.0.90": "DC01"})
+    fqdn_bc = [e for e in fqdn_edges if e["target_host"] == "DC01"]
+    if not (fqdn_bc and fqdn_bc[0]["credential_transition"]
+            and fqdn_bc[0]["credential_transition"]["state"] == "confirmed"):
+        fails.append("FQDN TargetServerName did not match canonical short host name")
+
     # RDP evidence must not be hidden by a NEWER unrelated HTTPS flow to same host
     ev = [net(3389, "10:00:00"), net(443, "10:00:20"), logon("10"), priv("0x111")]
     if len(all_edges(ev)) != 1:

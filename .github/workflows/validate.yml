@@ -32,6 +32,8 @@ jobs:
           python automation/test_edge_contract.py
           python automation/test_edge_materialization.py
           python automation/test_pipeline.py
+          python automation/test_evidence_io.py
+          python automation/test_reconstruct_case.py
 
       - name: Validate all detection rules
         run: python automation/validate_rules.py
