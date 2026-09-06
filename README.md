@@ -1,13 +1,43 @@
 # Detection Engineering Portfolio
 
-**Detection-as-Code and evidence-based hybrid lateral-movement reconstruction
-across Windows and AWS environments.**
+**Practical Detection-as-Code and evidence-based hybrid lateral-movement
+reconstruction for SMEs and other resource-constrained security teams.**
 
-A Detections-as-Code portfolio built on the Elastic Stack. Each detection is a
-self-contained, version-controlled unit that pairs the query logic with its
-hypothesis, MITRE ATT&CK mapping, and validation data. On every push, CI checks
-each unit's structure and, for EQL rules, executes the query against its samples
-(see the CI section for exactly what is and isn't covered).
+The research purpose of this repository is to help a small security team answer
+a focused forensic question: **who reached which system, from where, and through
+which route—and was that observed route authorized?** The prototype combines a
+limited set of network, authentication, cloud-audit, and organizational-policy
+records in a transparent, training-free workflow. It reports insufficient
+evidence or context instead of filling gaps with assumptions.
+
+> **Research question:** Can a resource-constrained organization reconstruct an
+> observed identity path and evaluate its route authorization using limited
+> network and authentication evidence, while avoiding conclusions that the
+> available evidence cannot support?
+
+The SME perspective is a design motivation, not a completed field-validation
+claim:
+
+| Common constraint | Design response in this prototype |
+|---|---|
+| Limited analyst time | An offline case runner automates normalization, joins, graph construction, policy evaluation, and reporting |
+| Limited compute and training data | Deterministic Python processing; no machine-learning model is required for the evidentiary core |
+| Fragmented on-premises and cloud records | Platform-native evidence is normalized into a shared `ReachabilityEdge` v2 vocabulary |
+| Need for explainable findings | Every asserted edge retains its evidence references, and each run records hashes and a stable `derivation_id` |
+| Incomplete telemetry or policy | The pipeline returns `INSUFFICIENT_EVIDENCE` or `INSUFFICIENT_CONTEXT` instead of guessing |
+
+The current controlled evaluation demonstrates the behavior of a bounded
+prototype. It does not establish operational effectiveness across representative
+SMEs; practitioner evaluation and real-lab validation remain future work. See
+[`docs/research_scope.md`](docs/research_scope.md) for the full purpose, scope,
+and evaluation boundary.
+
+The broader repository remains a Detections-as-Code portfolio built on the
+Elastic Stack. Each detection is a self-contained, version-controlled unit that
+pairs query logic with its hypothesis, MITRE ATT&CK mapping, and validation
+data. On every push, CI checks each unit's structure and, for EQL rules,
+executes the query against its samples (see the CI section for exactly what is
+and is not covered).
 
 The focus is **identity-based lateral movement detection** (my research niche),
 complemented by widely-recognised "classic" detections for range. A Scapy-based
